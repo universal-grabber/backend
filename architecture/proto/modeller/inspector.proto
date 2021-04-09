@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package net.tislib.ugm.grpc;
+
+service Inspector {
+  rpc test1 (HelloRequest) returns (HelloResponse) {}
+  rpc test2 (HelloRequest) returns (stream HelloResponse) {}
+}
+
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string name = 1;
+}

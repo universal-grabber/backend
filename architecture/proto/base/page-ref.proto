@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "base/page-ref-status.proto";
+import "base/page-ref-state.proto";
+
+message PageRef {
+  string id            = 1;
+  string websiteName   = 2;
+  string url           = 3;
+  PageRefState state   = 4;
+  PageRefStatus status = 5;
+  repeated string tags = 6;
+}

@@ -1,0 +1,19 @@
+//syntax = "proto3";
+//
+//option go_package = "taleh1/taleh2";
+//
+//service HelloService {
+//  rpc SayHelloXX (HelloRequest) returns (HelloResponse);
+//  rpc LotsOfReplies(HelloRequest) returns (stream HelloResponse);
+//}
+//
+//message HelloRequest {
+//  string greeting = 1 ;
+//}
+//
+//message HelloResponse {
+//  string reply = 1;
+//}
+
+
+import "base/page-ref.proto";

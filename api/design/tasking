@@ -1,0 +1,5 @@
+concept:
+1. need to reschedule pages (different cats for different websites)
+2. need to control insert (disallowed pages should not be inserted)
+2.1. we have 2 type of pages, 1) for parsing, 2) for deep-scanning
+3. need to have sequential performance metrics

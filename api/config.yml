@@ -1,0 +1,5 @@
+listenAddr: 0.0.0.0
+listenPort: 8080
+logLevel: Trace
+dbConnection:
+
