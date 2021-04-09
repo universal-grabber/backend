@@ -7,9 +7,10 @@ node {
         }
 
         if (env.BRANCH_NAME == 'master') {
-            stage ('go get dependencies') {
-				sh 'go get'
-            }
+//             stage ('go get dependencies') {
+// 				sh 'go get'
+//             }
+
             stage ('go build') {
 				sh "mkdir bin"
 				sh "GOOS=linux GOARCH=amd64 go build -o bin/api ./api"
