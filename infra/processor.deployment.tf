@@ -1,4 +1,4 @@
-resource "kubernetes_deployment" "ugb-api" {
+resource "kubernetes_deployment" "ugb-processor" {
   metadata {
     name = local.base_name_processor
 
