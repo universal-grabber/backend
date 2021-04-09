@@ -18,8 +18,8 @@ node {
             }
 
             stage ('Build Image') {
-				sh "docker build --build-arg APP_NAME=api . -t hub.tisserv.net/ugb-api"
-				sh "docker build --build-arg APP_NAME=storage . -t hub.tisserv.net/ugb-storage"
+				sh "docker build --build-arg APP_NAME=api . -t hub.tisserv.net/ugb-api:v${env.BUILD_NUMBER}"
+				sh "docker build --build-arg APP_NAME=storage . -t hub.tisserv.net/ugb-storage:v${env.BUILD_NUMBER}"
             }
 
             stage ('Push&Clean Image') {
