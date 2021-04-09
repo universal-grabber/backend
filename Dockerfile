@@ -9,6 +9,4 @@ COPY entrypoint.sh /entrypoint.sh
 COPY server.crt /
 COPY server.key /
 
-RUN ls /bin/
-
 ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]
