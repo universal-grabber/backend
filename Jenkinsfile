@@ -26,6 +26,10 @@ node {
 
             stage ('Push&Clean Image') {
                 sh "docker push hub.tisserv.net/ugb-api:v${env.BUILD_NUMBER}"
+                sh "docker push hub.tisserv.net/ugb-storage:v${env.BUILD_NUMBER}"
+                sh "docker push hub.tisserv.net/ugb-processor:v${env.BUILD_NUMBER}"
+
+                sh "docker rmi -f hub.tisserv.net/ugb-api:v${env.BUILD_NUMBER}"
                 sh "docker rmi -f hub.tisserv.net/ugb-storage:v${env.BUILD_NUMBER}"
                 sh "docker rmi -f hub.tisserv.net/ugb-processor:v${env.BUILD_NUMBER}"
             }
