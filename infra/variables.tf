@@ -5,4 +5,5 @@ locals {
 
   base_name_api     = "ugb-api"
   base_name_storage = "ugb-storage"
+  base_name_processor = "ugb-processor"
 }
