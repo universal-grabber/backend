@@ -42,6 +42,11 @@ resource "kubernetes_deployment" "ugb-processor" {
           }
 
           env {
+            name = "BACKEND_GRPC_API"
+            value = "ugb-api:6565"
+          }
+
+          env {
             name = "LOG_LEVEL"
             value = "6"
           }
