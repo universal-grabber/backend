@@ -7,7 +7,7 @@ import (
 func main() {
 	app := new(appPackage.App)
 
-	app.Addr = ":7070"
+	app.Addr = ":8443"
 
 	app.CertFile = "server.crt"
 	app.KeyFile = "server.key"

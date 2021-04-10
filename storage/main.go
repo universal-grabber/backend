@@ -12,7 +12,7 @@ func main() {
 
 	app := new(appPackage.App)
 
-	app.Addr = ":8080"
+	app.Addr = ":8443"
 
 	app.CertFile = "server.crt"
 	app.KeyFile = "server.key"
