@@ -76,12 +76,7 @@ func (client *ApiClientNew) AcceptPages(state base.PageRefState) chan *base.Page
 		for {
 			item, err := resp.Recv()
 
-			if err.Error() == "EOF" {
-				break
-			}
-
 			if err != nil {
-				log.Warn(err)
 				break
 			}
 
