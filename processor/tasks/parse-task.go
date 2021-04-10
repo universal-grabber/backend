@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"backend/gen/proto/base"
 	"backend/processor/client"
 	"backend/processor/lib"
 	"backend/processor/model"
@@ -29,7 +30,7 @@ func (task *ParseTask) Init(clients client.Clients) {
 	task.processor = lib.Processor{
 		ApiClient:       task.clients.GetApiClient(),
 		TaskProcessFunc: task.process,
-		TaskName:        task.Name(),
+		State:           base.PageRefState_PARSE,
 		Parallelism:     100,
 	}
 
@@ -65,7 +66,7 @@ func (task *ParseTask) Run() {
 	log.Print(task.Name(), " task stopped processing")
 }
 
-func (task *ParseTask) process(pageRef *model.PageRef) *model.PageRef {
+func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 	log.Tracef("page-ref received for download %s", pageRef.Url)
 
 	result := task.clients.GetBackendStorageClient().Get(pageRef)
@@ -75,13 +76,13 @@ func (task *ParseTask) process(pageRef *model.PageRef) *model.PageRef {
 	} else {
 		lib.PageRefLogger(pageRef, "fail-to-get-html").
 			Warnf("could not get page-ref html")
-		pageRef.Status = model.FAILED
+		pageRef.Status = base.PageRefStatus_FAILED
 	}
 
 	return pageRef
 }
 
-func (task *ParseTask) parseItem(result *model.StoreResult, pageRef *model.PageRef) model.PageRefStatus {
+func (task *ParseTask) parseItem(result *model.StoreResult, pageRef *base.PageRef) base.PageRefStatus {
 	lib.PageRefLogger(pageRef, "start-parse").
 		Trace("starting parse process")
 
@@ -89,21 +90,21 @@ func (task *ParseTask) parseItem(result *model.StoreResult, pageRef *model.PageR
 		if r := recover(); r != nil {
 			lib.PageRefLogger(pageRef, "parse-panic").
 				Errorf("panicing parse: %s", r)
-			pageRef.Status = model.FAILED
+			pageRef.Status = base.PageRefStatus_FAILED
 		}
 	}()
 	parseResult := result.Content
 
 	res := task.clients.GetModelProcessorClient().Parse(parseResult, pageRef.Url)
 
-	for _, tag := range *pageRef.Tags {
+	for _, tag := range pageRef.Tags {
 		res.Tags = append(res.Tags, tag)
 	}
 
 	if res == nil {
 		lib.PageRefLogger(pageRef, "parse-html-could-not-get").
 			Trace("could not get html file")
-		return model.FAILED
+		return base.PageRefStatus_FAILED
 	}
 
 	pageData := new(model.PageData)
@@ -114,18 +115,18 @@ func (task *ParseTask) parseItem(result *model.StoreResult, pageRef *model.PageR
 
 	if err != nil {
 		lib.CheckWithPageRefLogOnly(err, pageRef)
-		return model.FAILED
+		return base.PageRefStatus_FAILED
 	}
 
 	_, err = task.pageDataCol.InsertOne(context.TODO(), pageData)
 
 	if err != nil {
 		lib.CheckWithPageRefLogOnly(err, pageRef)
-		return model.FAILED
+		return base.PageRefStatus_FAILED
 	}
 
 	lib.PageRefLogger(pageRef, "finish-parse").
 		Trace("finishing parse process")
 
-	return model.FINISHED
+	return base.PageRefStatus_FINISHED
 }

@@ -1,9 +1,9 @@
 package tasks
 
 import (
+	"backend/gen/proto/base"
 	"backend/processor/client"
 	"backend/processor/lib"
-	"backend/processor/model"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/html"
@@ -26,7 +26,7 @@ func (task *DeepScanTask) Init(clients client.Clients) {
 	task.processor = lib.Processor{
 		ApiClient:       task.clients.GetApiClient(),
 		TaskProcessFunc: task.process,
-		TaskName:        task.Name(),
+		State:           base.PageRefState_DEEP_SCAN,
 		Parallelism:     150,
 	}
 }
@@ -41,15 +41,15 @@ func (task *DeepScanTask) Run() {
 	log.Print(task.Name(), " task stopped processing")
 }
 
-func (task *DeepScanTask) process(item *model.PageRef) *model.PageRef {
+func (task *DeepScanTask) process(item *base.PageRef) *base.PageRef {
 	log.Tracef("page-ref received for download %s", item.Url)
 
 	storeResult := task.clients.GetBackendStorageClient().Get(item)
 
 	if !storeResult.Ok {
-		item.Status = "FAILED"
+		item.Status = base.PageRefStatus_FAILED
 	} else {
-		item.Status = "FINISHED"
+		item.Status = base.PageRefStatus_FINISHED
 	}
 
 	tokenizer := html.NewTokenizer(strings.NewReader(storeResult.Content))
@@ -59,12 +59,12 @@ func (task *DeepScanTask) process(item *model.PageRef) *model.PageRef {
 	return item
 }
 
-func (task *DeepScanTask) saveNewHref(href string, ref *model.PageRef) {
+func (task *DeepScanTask) saveNewHref(href string, ref *base.PageRef) {
 	newPageRef := makePageRef(href, ref)
 	task.clients.GetApiClient().InsertPageRef(newPageRef)
 }
 
-func (task *DeepScanTask) processTokens(z *html.Tokenizer, pageRef *model.PageRef) {
+func (task *DeepScanTask) processTokens(z *html.Tokenizer, pageRef *base.PageRef) {
 	for {
 		tt := z.Next()
 		if tt == html.ErrorToken {
@@ -104,13 +104,13 @@ func (task *DeepScanTask) processTokens(z *html.Tokenizer, pageRef *model.PageRe
 	}
 }
 
-func makePageRef(href string, parentPageRef *model.PageRef) *model.PageRef {
+func makePageRef(href string, parentPageRef *base.PageRef) *base.PageRef {
 	id, _ := uuid.FromString(lib.NamedUUID([]byte(href)))
 
-	return &model.PageRef{
-		Id:          id,
-		State:       "DOWNLOAD",
-		Status:      "PENDING",
+	return &base.PageRef{
+		Id:          id.String(),
+		State:       base.PageRefState_DOWNLOAD,
+		Status:      base.PageRefStatus_PENDING,
 		Url:         href,
 		WebsiteName: parentPageRef.WebsiteName,
 	}
@@ -128,7 +128,7 @@ func isHrefSuitable(href string) bool {
 	return true
 }
 
-func fixHref(ref *model.PageRef, href string) string {
+func fixHref(ref *base.PageRef, href string) string {
 	hrefUrl, err := url.Parse(href)
 
 	if err != nil {

@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"backend/gen/proto/base"
 	"backend/processor/client"
 	"backend/processor/lib"
 	"backend/processor/model"
@@ -33,7 +34,7 @@ func (task *PublishTask) Init(clients client.Clients) {
 	task.processor = lib.Processor{
 		ApiClient:       task.clients.GetApiClient(),
 		TaskProcessFunc: task.process,
-		TaskName:        task.Name(),
+		State:           base.PageRefState_PUBLISH,
 		Parallelism:     100,
 	}
 
@@ -69,7 +70,7 @@ func (task *PublishTask) Run() {
 	log.Print(task.Name(), " task stopped processing")
 }
 
-func (task *PublishTask) process(pageRef *model.PageRef) *model.PageRef {
+func (task *PublishTask) process(pageRef *base.PageRef) *base.PageRef {
 	lib.PageRefLogger(pageRef, "start-publish").
 		Trace("starting publish process")
 
@@ -86,7 +87,7 @@ func (task *PublishTask) process(pageRef *model.PageRef) *model.PageRef {
 
 		task.upload(data, pageRef)
 
-		pageRef.Status = model.FINISHED
+		pageRef.Status = base.PageRefStatus_FINISHED
 
 		return pageRef
 	} else {
@@ -94,7 +95,7 @@ func (task *PublishTask) process(pageRef *model.PageRef) *model.PageRef {
 			Warn("record not found to publish")
 	}
 
-	pageRef.Status = model.FAILED
+	pageRef.Status = base.PageRefStatus_FAILED
 
 	lib.PageRefLogger(pageRef, "finish-publish").
 		Trace("publish operation finished")
@@ -102,7 +103,7 @@ func (task *PublishTask) process(pageRef *model.PageRef) *model.PageRef {
 	return pageRef
 }
 
-func (task *PublishTask) upload(data *model.PageData, pageRef *model.PageRef) {
+func (task *PublishTask) upload(data *model.PageData, pageRef *base.PageRef) {
 	var buffer []*model.Record
 
 	record := data.Record

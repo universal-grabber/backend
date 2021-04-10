@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetReportCaller(true)
+	//log.SetFormatter(&log.JSONFormatter{})
+	//log.SetReportCaller(true)
 	log.SetLevel(log.InfoLevel)
 
 	app := new(appPackage.App)
@@ -31,6 +31,7 @@ func configure(app *appPackage.App) {
 	storageApi := getStringConfig("STORAGE_API", "")
 	modelProcessorApi := getStringConfig("MODEL_PROCESSOR_API", "")
 	backendApi := getStringConfig("BACKEND_API", "")
+	backendGrpcApi := getStringConfig("BACKEND_GRPC_API", "")
 	parseMongoUri := getStringConfig("PARSE_MONGO_URI", "")
 
 	//level, err := strconv.Atoi(debugStr)
@@ -42,6 +43,7 @@ func configure(app *appPackage.App) {
 	config.UgbStorageUri = storageApi
 	config.UgbModelProcessorUri = modelProcessorApi
 	config.UgbApiUri = backendApi
+	config.UgbApiGrpcUri = backendGrpcApi
 	config.ParseMongoUri = parseMongoUri
 
 	if enabledWebsites != "" {

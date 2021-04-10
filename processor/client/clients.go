@@ -4,7 +4,7 @@ import "backend/processor/lib"
 
 type Clients interface {
 	lib.ConfigProvider
-	GetApiClient() *ApiClient
+	GetApiClient() *ApiClientNew
 	GetBackendStorageClient() *BackendStorageClient
 	GetModelProcessorClient() *ModelProcessorClient
 	GetPublisherClient() *PublisherClient

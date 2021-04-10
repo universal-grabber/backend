@@ -1,13 +1,13 @@
 package lib
 
 import (
-	"backend/processor/model"
+	"backend/gen/proto/base"
 	log "github.com/sirupsen/logrus"
 )
 
-func PageRefLogger(pageRef *model.PageRef, operation string) *log.Entry {
+func PageRefLogger(pageRef *base.PageRef, operation string) *log.Entry {
 	return log.WithFields(map[string]interface{}{
-		"pageRefId":   pageRef.Id.String(),
+		"pageRefId":   pageRef.Id,
 		"url":         pageRef.Url,
 		"state":       pageRef.State,
 		"status":      pageRef.Status,

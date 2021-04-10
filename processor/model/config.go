@@ -8,6 +8,7 @@ type Config struct {
 	EnabledTasks    []string
 
 	UgbApiUri            string
+	UgbApiGrpcUri            string
 	UgbModelProcessorUri string
 	UgbStorageUri        string
 	ParseMongoUri        string

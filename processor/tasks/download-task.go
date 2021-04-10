@@ -1,9 +1,9 @@
 package tasks
 
 import (
+	"backend/gen/proto/base"
 	"backend/processor/client"
 	"backend/processor/lib"
-	"backend/processor/model"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,7 +22,7 @@ func (task *DownloadTask) Init(clients client.Clients) {
 	task.processor = lib.Processor{
 		ApiClient:       task.clients.GetApiClient(),
 		TaskProcessFunc: task.process,
-		TaskName:        task.Name(),
+		State:           base.PageRefState_DOWNLOAD,
 		Parallelism:     150,
 	}
 }
@@ -37,15 +37,15 @@ func (task *DownloadTask) Run() {
 	log.Print(task.Name(), " task stopped processing")
 }
 
-func (task *DownloadTask) process(item *model.PageRef) *model.PageRef {
+func (task *DownloadTask) process(item *base.PageRef) *base.PageRef {
 	log.Tracef("page-ref received for download %s", item.Url)
 
 	result := task.clients.GetBackendStorageClient().Store(item)
 
 	if !result.Ok {
-		item.Status = "FAILED"
+		item.Status = base.PageRefStatus_FAILED
 	} else {
-		item.Status = "FINISHED"
+		item.Status = base.PageRefStatus_FINISHED
 	}
 
 	return item

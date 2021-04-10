@@ -1,6 +1,7 @@
 package client
 
 import (
+	"backend/gen/proto/base"
 	"backend/processor/lib"
 	"backend/processor/model"
 	"bytes"
@@ -17,7 +18,7 @@ func (client *BackendStorageClient) Init(config model.Config) {
 	client.config = config
 }
 
-func (client *BackendStorageClient) Store(item *model.PageRef) *model.StoreResult {
+func (client *BackendStorageClient) Store(item *base.PageRef) *model.StoreResult {
 	data, err := json.Marshal(item)
 
 	lib.Check(err)
@@ -39,7 +40,7 @@ func (client *BackendStorageClient) Store(item *model.PageRef) *model.StoreResul
 	return storeResult
 }
 
-func (client *BackendStorageClient) Get(item *model.PageRef) *model.StoreResult {
+func (client *BackendStorageClient) Get(item *base.PageRef) *model.StoreResult {
 	data, err := json.Marshal(item)
 
 	lib.Check(err)

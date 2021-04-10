@@ -1,23 +1,23 @@
 package lib
 
 import (
-	"backend/processor/model"
+	"backend/gen/proto/base"
 	log "github.com/sirupsen/logrus"
 	"sync"
 )
 
-type ProcessorFunc func(pageRef *model.PageRef) *model.PageRef
+type ProcessorFunc func(pageRef *base.PageRef) *base.PageRef
 
 type Processor struct {
 	ApiClient       ApiClientInterface
 	TaskProcessFunc ProcessorFunc
-	TaskName        string
+	State           base.PageRefState
 	Parallelism     int
 
 	// private data
 	started            bool
 	wg                 *sync.WaitGroup
-	pageRefReadChannel chan *model.PageRef
+	pageRefReadChannel chan *base.PageRef
 	timeCalc           *TimeCalc
 
 	//progressingPagesMutex *sync.Mutex
@@ -25,8 +25,8 @@ type Processor struct {
 }
 
 type ApiClientInterface interface {
-	AcceptPages(taskName string) chan *model.PageRef
-	UpdatePageRef(ref *model.PageRef)
+	AcceptPages(state base.PageRefState) chan *base.PageRef
+	UpdatePageRef(ref *base.PageRef)
 }
 
 func (processor *Processor) Start() {
@@ -38,13 +38,13 @@ func (processor *Processor) Start() {
 	//processor.progressingPages = make(map[string]bool)
 
 	processor.timeCalc = new(TimeCalc)
-	processor.timeCalc.Init(processor.TaskName)
+	processor.timeCalc.Init(processor.State.String())
 
 	// init
 	processor.started = true
 	processor.wg = new(sync.WaitGroup)
 
-	processor.pageRefReadChannel = processor.ApiClient.AcceptPages(processor.TaskName)
+	processor.pageRefReadChannel = processor.ApiClient.AcceptPages(processor.State)
 
 	for i := 0; i < processor.Parallelism; i++ {
 		processor.wg.Add(1)
@@ -62,7 +62,7 @@ func (processor *Processor) runProcess(i int) {
 	}
 }
 
-func (processor *Processor) runProcess2(i int, pageRef *model.PageRef) {
+func (processor *Processor) runProcess2(i int, pageRef *base.PageRef) {
 	//processor.progressingPagesMutex.Lock()
 	//if processor.progressingPages[pageRef.Id.String()] {
 	//	processor.progressingPagesMutex.Unlock()
@@ -93,7 +93,7 @@ func (processor *Processor) runProcess2(i int, pageRef *model.PageRef) {
 //	delete(processor.progressingPages, id.String())
 //}
 
-func (processor *Processor) processItem(i int, pageRef *model.PageRef) {
+func (processor *Processor) processItem(i int, pageRef *base.PageRef) {
 	origPageRef := pageRef
 
 	PageRefLogger(pageRef, "before-run-process-item").
@@ -105,12 +105,12 @@ func (processor *Processor) processItem(i int, pageRef *model.PageRef) {
 
 	if pageRef == nil {
 		pageRef = origPageRef
-		pageRef.Status = "FAILED"
+		pageRef.Status = base.PageRefStatus_FAILED
 	}
 
 	// fix status
-	if pageRef.Status != "FINISHED" {
-		pageRef.Status = "FAILED"
+	if pageRef.Status != base.PageRefStatus_FINISHED {
+		pageRef.Status = base.PageRefStatus_FAILED
 	}
 
 	PageRefLogger(pageRef, "after-run-process-item-status-fix").
@@ -119,13 +119,13 @@ func (processor *Processor) processItem(i int, pageRef *model.PageRef) {
 	processor.ApiClient.UpdatePageRef(pageRef)
 }
 
-func (processor *Processor) runProcessItem(pageRef *model.PageRef, processorIndex int) *model.PageRef {
+func (processor *Processor) runProcessItem(pageRef *base.PageRef, processorIndex int) *base.PageRef {
 	defer func() {
 		if r := recover(); r != nil {
 			PageRefLogger(pageRef, "run-process-panic").
 				Errorf("panicing process[%d]: %s / %s / %s / %s",
 					processorIndex,
-					processor.TaskName,
+					processor.State,
 					pageRef.Id,
 					pageRef.Url,
 					r)

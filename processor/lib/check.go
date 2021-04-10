@@ -1,7 +1,7 @@
 package lib
 
 import (
-	"backend/processor/model"
+	"backend/gen/proto/base"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -12,7 +12,7 @@ func Check(err error) {
 	}
 }
 
-func CheckWithPageRef(err error, pageRef *model.PageRef) {
+func CheckWithPageRef(err error, pageRef *base.PageRef) {
 	if err != nil {
 		PageRefLogger(pageRef, "fatal-error").
 			WithError(err).
@@ -21,7 +21,7 @@ func CheckWithPageRef(err error, pageRef *model.PageRef) {
 	}
 }
 
-func CheckWithPageRefLogOnly(err error, pageRef *model.PageRef) {
+func CheckWithPageRefLogOnly(err error, pageRef *base.PageRef) {
 	if err != nil {
 		PageRefLogger(pageRef, "fatal-error").
 			WithError(err).
