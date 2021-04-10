@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+export GO_PATH=~/go
+export PATH=$PATH:/$GO_PATH/bin
+
 go install google.golang.org/protobuf/cmd/protoc-gen-go
 go get google.golang.org/protobuf/cmd/protoc-gen-go
 go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
