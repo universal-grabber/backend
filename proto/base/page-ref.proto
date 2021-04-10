@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+option go_package = "backend/gen/proto/base";
+
 import "base/page-ref-status.proto";
 import "base/page-ref-state.proto";
 

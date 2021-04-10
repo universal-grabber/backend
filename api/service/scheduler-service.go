@@ -2,7 +2,6 @@ package service
 
 import (
 	"backend/api/const"
-	"backend/api/controller"
 	"backend/api/helper"
 	"backend/api/model"
 	"context"
@@ -19,12 +18,13 @@ type SchedulerServiceImpl struct {
 	tagMatchers map[string][]model.TagMatcher
 	regexCache  map[string]*regexp.Regexp
 
-	PageRefApi *controller.PageRefApiImpl
+	service *PageRefService
 }
 
 func (s *SchedulerServiceImpl) Run() {
 	s.tagMatchers = make(map[string][]model.TagMatcher)
 	s.regexCache = make(map[string]*regexp.Regexp)
+	s.service = new(PageRefService)
 
 	c := cron.New()
 
@@ -314,13 +314,13 @@ func (s *SchedulerServiceImpl) reconfigureEntryPoints(website *model.WebSite) {
 
 		s.ConfigurePageRef(&pageRef)
 
-		if !s.PageRefApi.PageRefExists(id) {
+		if !s.service.PageRefExists(id) {
 			list = append(list, pageRef)
 		}
 	}
 
 	if len(list) > 0 {
-		s.PageRefApi.BulkWrite2(list)
+		s.service.BulkWrite2(list)
 	}
 }
 
@@ -335,19 +335,10 @@ func (s *SchedulerServiceImpl) runScheduleOnWebsite(website *model.WebSite, sche
 
 	schedule.Match.WebsiteName = website.Name
 
-	pageChan, updateChan := s.PageRefApi.UpdateStatesBulk2(schedule.Match, schedule.ToState, schedule.ToStatus, interruptChan)
+	pageChan, updateChan := s.service.UpdateStatesBulk2(schedule.Match, schedule.ToState, schedule.ToStatus, interruptChan)
 	defer close(updateChan)
 
 	for pageRef := range pageChan {
 		updateChan <- pageRef
 	}
-}
-
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }

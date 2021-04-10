@@ -1,0 +1,22 @@
+syntax = 'proto3';
+
+import "base/page-ref-status.proto";
+import "base/page-ref-state.proto";
+import "base/page-ref.proto";
+
+option go_package = "backend/gen/proto/service";
+
+message PageRefServiceUpdateRequest {
+  int32 bufferSize       = 1;
+  bool fairSearch        = 2;
+
+  PageRefState state     = 3;
+  PageRefStatus status   = 4;
+
+  PageRefState toState   = 5;
+  PageRefStatus toStatus = 6;
+}
+
+service PageRefService {
+  rpc updateAndAccept (PageRefServiceUpdateRequest) returns (stream PageRef);
+}

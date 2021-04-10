@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+option go_package = "backend/gen/proto/base";
+
 enum PageRefState {
   TODO      = 0;
   DOWNLOAD  = 1;
