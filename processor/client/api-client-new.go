@@ -64,28 +64,30 @@ func (client *ApiClientNew) AcceptPages(state base.PageRefState) chan *base.Page
 
 	pageRefReadChannel := make(chan *base.PageRef)
 
-	for {
-		resp, err := client.pageServiceClient.UpdateAndAccept(context.TODO(), req)
-
-		if err != nil {
-			log.Warn(err)
-			time.Sleep(1 * time.Second)
-			continue
-		}
-
+	go func() {
 		for {
-			item, err := resp.Recv()
+			resp, err := client.pageServiceClient.UpdateAndAccept(context.TODO(), req)
 
 			if err != nil {
-				break
+				log.Warn(err)
+				time.Sleep(1 * time.Second)
+				continue
 			}
 
-			timeCalc.Step()
-			pageRefReadChannel <- item
-		}
+			for {
+				item, err := resp.Recv()
 
-		time.Sleep(1 * time.Second)
-	}
+				if err != nil {
+					break
+				}
+
+				timeCalc.Step()
+				pageRefReadChannel <- item
+			}
+
+			time.Sleep(1 * time.Second)
+		}
+	}()
 
 	return pageRefReadChannel
 }
