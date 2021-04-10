@@ -21,7 +21,7 @@ func (receiver *PageRefGrpcService) Init() {
 }
 
 func (receiver PageRefGrpcService) UpdateAndAccept(req *pb.PageRefServiceUpdateRequest, res pb.PageRefService_UpdateAndAcceptServer) error {
-	log.Print("starting to send items")
+	log.Print("requested UpdateAndAccept for " + req.String())
 	timeCalc := new(helper.TimeCalc)
 	timeCalc.Init("pageRefApiList")
 
