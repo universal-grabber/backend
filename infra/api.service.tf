@@ -21,7 +21,7 @@ resource "kubernetes_service" "ugb-api" {
     }
 
     port {
-      name = "http"
+      name = "grpc"
       port = 6565
       node_port = 30004
       target_port = 6565
