@@ -16,7 +16,6 @@ resource "kubernetes_service" "ugb-model-parser" {
     port {
       name = "http"
       port = 80
-      node_port = 30003
       target_port = 8080
     }
   }
