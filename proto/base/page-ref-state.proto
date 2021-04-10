@@ -7,4 +7,5 @@ enum PageRefState {
   DOWNLOAD  = 1;
   DEEP_SCAN = 2;
   PARSE     = 3;
+  PUBLISH   = 4;
 }

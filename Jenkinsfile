@@ -9,6 +9,7 @@ node {
         if (env.BRANCH_NAME == 'master') {
             stage ('go build') {
 				sh "mkdir bin"
+				sh "./proto.sh"
 				sh "GOOS=linux GOARCH=amd64 go build -o bin/api ./api"
 				sh "GOOS=linux GOARCH=amd64 go build -o bin/storage ./storage"
 				sh "GOOS=linux GOARCH=amd64 go build -o bin/processor ./processor"

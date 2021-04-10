@@ -21,6 +21,7 @@ func (receiver *PageRefGrpcService) Init() {
 }
 
 func (receiver PageRefGrpcService) UpdateAndAccept(req *pb.PageRefServiceUpdateRequest, res pb.PageRefService_UpdateAndAcceptServer) error {
+	log.Print("starting to send items")
 	timeCalc := new(helper.TimeCalc)
 	timeCalc.Init("pageRefApiList")
 
@@ -35,9 +36,12 @@ func (receiver PageRefGrpcService) UpdateAndAccept(req *pb.PageRefServiceUpdateR
 	searchPageRef := new(model.SearchPageRef)
 
 	searchPageRef.FairSearch = req.FairSearch
-	searchPageRef.PageSize = 99999999999
+	searchPageRef.PageSize = 1000
 	searchPageRef.State = req.State.String()
 	searchPageRef.Status = req.Status.String()
+	if req.EnabledWebsites != nil && len(req.EnabledWebsites) > 0 {
+		searchPageRef.WebsiteName = req.EnabledWebsites[0]
+	}
 	// implement logic for websites and tags
 
 	var closeChan = make(chan bool)
@@ -58,6 +62,7 @@ func (receiver PageRefGrpcService) UpdateAndAccept(req *pb.PageRefServiceUpdateR
 
 		if err != nil {
 			log.Warn(err)
+			break
 		}
 
 		updateChan <- pageRef

@@ -7,14 +7,16 @@ import "base/page-ref.proto";
 option go_package = "backend/gen/proto/service";
 
 message PageRefServiceUpdateRequest {
-  int32 bufferSize       = 1;
-  bool fairSearch        = 2;
+  int32 bufferSize                = 1;
+  bool fairSearch                 = 2;
 
-  PageRefState state     = 3;
-  PageRefStatus status   = 4;
+  PageRefState state              = 3;
+  PageRefStatus status            = 4;
 
-  PageRefState toState   = 5;
-  PageRefStatus toStatus = 6;
+  PageRefState toState            = 5;
+  PageRefStatus toStatus          = 6;
+
+  repeated string enabledWebsites = 7;
 }
 
 service PageRefService {
