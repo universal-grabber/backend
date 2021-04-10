@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package net.tislib.ugm.grpc;
+package net . tislib. ugm. grpc;
 
 service Inspector {
   rpc test1 (HelloRequest) returns (HelloResponse) {}

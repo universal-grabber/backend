@@ -1,8 +1,8 @@
 syntax = "proto3";
 
 enum PageRefState {
-  TODO = 0;
-  DOWNLOAD = 1;
+  TODO      = 0;
+  DOWNLOAD  = 1;
   DEEP_SCAN = 2;
-  PARSE = 3;
+  PARSE     = 3;
 }

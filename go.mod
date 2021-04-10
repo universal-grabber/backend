@@ -3,9 +3,11 @@ module backend
 go 1.15
 
 require (
+	github.com/PuerkitoBio/goquery v1.6.1
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.7.0
 	github.com/google/uuid v1.0.0
+	github.com/gosimple/slug v1.9.0
 	github.com/pborman/uuid v1.2.1
 	github.com/robfig/cron v1.2.0
 	github.com/satori/go.uuid v1.2.0

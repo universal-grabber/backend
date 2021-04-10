@@ -23,7 +23,7 @@ resource "kubernetes_deployment" "ugb-api" {
       }
       spec {
         container {
-          name  = local.base_name_api
+          name = local.base_name_api
           image = "${local.repository}/${local.base_name_api}:${var.DOCKER_IMG_TAG}"
         }
 

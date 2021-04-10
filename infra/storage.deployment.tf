@@ -23,7 +23,7 @@ resource "kubernetes_deployment" "ugb-storage" {
       }
       spec {
         container {
-          name  = local.base_name_storage
+          name = local.base_name_storage
           image = "${local.repository}/${local.base_name_storage}:${var.DOCKER_IMG_TAG}"
         }
 

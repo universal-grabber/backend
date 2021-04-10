@@ -1,8 +1,8 @@
 syntax = "proto3";
 
 enum PageRefStatus {
-  PENDING = 0;
+  PENDING   = 0;
   EXECUTING = 1;
-  FINISHED = 2;
-  FAILED = 3;
+  FINISHED  = 2;
+  FAILED    = 3;
 }
