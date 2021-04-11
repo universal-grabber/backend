@@ -1,16 +1,10 @@
 package controller
 
 import (
-	"backend/api/const"
-	context2 "backend/api/context"
 	"backend/api/helper"
 	"backend/api/model"
 	"backend/api/service"
-	"context"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type PageRefApiImpl struct {
@@ -141,67 +135,10 @@ func (receiver *PageRefApiImpl) BulkUpsert(c *gin.Context) {
 }
 
 func (receiver *PageRefApiImpl) BulkInsert(c *gin.Context) {
-	db := helper.UgbMongoInstance
-
-	timeCalc := new(helper.TimeCalc)
-	timeCalc.Init("pageRefApiList")
-
 	var list []model.PageRef
-	var insertList []model.PageRef
-	var insertUrls []string
-
 	c.BindJSON(&list)
 
-	col := db.GetCollection(_const.UgbMongoDb, "pageRef")
-
-	opts := new(options.BulkWriteOptions)
-	var models []mongo.WriteModel
-
-	existingItems := make(map[string]bool)
-
-	for _, pageRef := range list {
-		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
-
-		if contains(*pageRef.Tags, "delete") {
-			continue
-		}
-
-		if !contains(*pageRef.Tags, "allow-import") {
-			continue
-		}
-
-		if existingItems[pageRef.Url] {
-			continue
-		}
-
-		existingItems[pageRef.Url] = true
-
-		insertList = append(insertList, pageRef)
-		insertUrls = append(insertUrls, pageRef.Url)
-	}
-
-	existingUrls := receiver.service.PageRefExistsMultiViaUrl(insertUrls)
-
-	for _, pageRef := range insertList {
-		if contains(existingUrls, pageRef.Url) {
-			continue
-		}
-		writeModel := mongo.NewInsertOneModel()
-		writeModel.SetDocument(pageRef)
-
-		models = append(models, writeModel)
-	}
-
-	if len(models) == 0 {
-		return
-	}
-
-	resp, err := col.BulkWrite(context.Background(), models, opts)
-	log.Printf("insert records %d of %d; real insert count: %d", len(list), len(models), resp.InsertedCount)
-
-	if err != nil {
-		panic(err)
-	}
+	receiver.service.BulkInsert(list)
 }
 
 func contains(s []string, e string) bool {

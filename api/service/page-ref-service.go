@@ -175,7 +175,7 @@ func searchByFilter(db *helper.UgbMongo, filters bson.M, interruptChan <-chan bo
 	return pageChan
 }
 
-func (receiver *PageRefService) asyncUpdateRecords(updateChan chan *model.PageRef, toState string, toStatus string, timeCalc *helper.TimeCalc) {
+func (service *PageRefService) asyncUpdateRecords(updateChan chan *model.PageRef, toState string, toStatus string, timeCalc *helper.TimeCalc) {
 	col := helper.UgbMongoInstance.GetCollection(_const.UgbMongoDb, "pageRef")
 
 	go func() {
@@ -185,7 +185,7 @@ func (receiver *PageRefService) asyncUpdateRecords(updateChan chan *model.PageRe
 			buffer = append(buffer, pageRef.Id)
 
 			if len(buffer) > 500 {
-				receiver.flushUpdate(col, buffer, toState, toStatus)
+				service.flushUpdate(col, buffer, toState, toStatus)
 				buffer = []uuid.UUID{}
 			}
 
@@ -193,12 +193,12 @@ func (receiver *PageRefService) asyncUpdateRecords(updateChan chan *model.PageRe
 		}
 
 		if len(buffer) > 0 {
-			receiver.flushUpdate(col, buffer, toState, toStatus)
+			service.flushUpdate(col, buffer, toState, toStatus)
 		}
 	}()
 }
 
-func (receiver *PageRefService) flushUpdate(col *mongo.Collection, buffer []uuid.UUID, toState string, toStatus string) {
+func (service *PageRefService) flushUpdate(col *mongo.Collection, buffer []uuid.UUID, toState string, toStatus string) {
 	var ids []primitive.Binary
 
 	for index := range buffer {
@@ -221,7 +221,7 @@ func (receiver *PageRefService) flushUpdate(col *mongo.Collection, buffer []uuid
 	}
 }
 
-func (receiver *PageRefService) UpdateStatesBulk2(searchPageRef *model.SearchPageRef, toState string, toStatus string, interruptChan <-chan bool) (chan *model.PageRef, chan *model.PageRef) {
+func (service *PageRefService) UpdateStatesBulk2(searchPageRef *model.SearchPageRef, toState string, toStatus string, interruptChan <-chan bool) (chan *model.PageRef, chan *model.PageRef) {
 	timeCalc := new(helper.TimeCalc)
 	timeCalc.Init("pageRefApiList")
 
@@ -237,13 +237,13 @@ func (receiver *PageRefService) UpdateStatesBulk2(searchPageRef *model.SearchPag
 
 	// search async
 	go func() {
-		receiver.Search(searchPageRef, pageChan, interruptChan)
+		service.Search(searchPageRef, pageChan, interruptChan)
 	}()
 
 	updateChan := make(chan *model.PageRef, 100)
 
 	for i := 0; i < 3; i++ {
-		receiver.asyncUpdateRecords(updateChan, toState, toStatus, timeCalc)
+		service.asyncUpdateRecords(updateChan, toState, toStatus, timeCalc)
 	}
 
 	return pageChan, updateChan
@@ -258,7 +258,7 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func (receiver *PageRefService) PageRefExistsMultiViaUrl(urls []string) []string {
+func (service *PageRefService) PageRefExistsMultiViaUrl(urls []string) []string {
 	opts := new(options.FindOptions)
 	opts.Projection = bson.D{{"url", 1}}
 
@@ -287,7 +287,7 @@ func (receiver *PageRefService) PageRefExistsMultiViaUrl(urls []string) []string
 	return existingUrls
 }
 
-func (receiver *PageRefService) PageRefExists(id uuid.UUID) bool {
+func (service *PageRefService) PageRefExists(id uuid.UUID) bool {
 	opts := new(options.FindOptions)
 	opts.Projection = bson.D{{"_id", 0}}
 
@@ -309,7 +309,7 @@ func (receiver *PageRefService) PageRefExists(id uuid.UUID) bool {
 	return false
 }
 
-func (receiver *PageRefService) BulkWrite2(list []model.PageRef) {
+func (service *PageRefService) BulkWrite2(list []model.PageRef) {
 	col := helper.UgbMongoInstance.GetCollection(_const.UgbMongoDb, "pageRef")
 
 	opts := new(options.BulkWriteOptions)
@@ -344,6 +344,67 @@ func (receiver *PageRefService) BulkWrite2(list []model.PageRef) {
 	}
 
 	_, err := col.BulkWrite(context.Background(), models, opts)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (service *PageRefService) BulkInsert(list []model.PageRef) {
+	db := helper.UgbMongoInstance
+
+	timeCalc := new(helper.TimeCalc)
+	timeCalc.Init("pageRefApiList")
+
+	var insertList []model.PageRef
+	var insertUrls []string
+
+	col := db.GetCollection(_const.UgbMongoDb, "pageRef")
+
+	opts := new(options.BulkWriteOptions)
+	var models []mongo.WriteModel
+
+	existingItems := make(map[string]bool)
+
+	for _, pageRef := range list {
+		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
+
+		if contains(*pageRef.Tags, "delete") {
+			continue
+		}
+
+		if !contains(*pageRef.Tags, "allow-import") {
+			continue
+		}
+
+		if existingItems[pageRef.Url] {
+			continue
+		}
+
+		existingItems[pageRef.Url] = true
+
+		insertList = append(insertList, pageRef)
+		insertUrls = append(insertUrls, pageRef.Url)
+	}
+
+	existingUrls := service.PageRefExistsMultiViaUrl(insertUrls)
+
+	for _, pageRef := range insertList {
+		if contains(existingUrls, pageRef.Url) {
+			continue
+		}
+		writeModel := mongo.NewInsertOneModel()
+		writeModel.SetDocument(pageRef)
+
+		models = append(models, writeModel)
+	}
+
+	if len(models) == 0 {
+		return
+	}
+
+	resp, err := col.BulkWrite(context.Background(), models, opts)
+	log.Printf("insert records %d of %d; real insert count: %d", len(list), len(models), resp.InsertedCount)
 
 	if err != nil {
 		panic(err)

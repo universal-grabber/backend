@@ -3,6 +3,7 @@ syntax = 'proto3';
 import "base/page-ref-status.proto";
 import "base/page-ref-state.proto";
 import "base/page-ref.proto";
+import "base/empty.proto";
 
 option go_package = "backend/gen/proto/service";
 
@@ -19,6 +20,14 @@ message PageRefServiceUpdateRequest {
   repeated string enabledWebsites = 7;
 }
 
+message PageRefList {
+  repeated PageRef list = 1;
+}
+
 service PageRefService {
   rpc updateAndAccept (PageRefServiceUpdateRequest) returns (stream PageRef);
+
+  rpc update (PageRefList) returns (Empty);
+
+  rpc create (PageRefList) returns (Empty);
 }

@@ -5,8 +5,11 @@ import (
 	"backend/api/model"
 	"backend/api/service"
 	commonModel "backend/common/model"
-	base "backend/gen/proto/base"
+	"backend/gen/proto/base"
 	pb "backend/gen/proto/service"
+	"backend/storage/lib"
+	"context"
+	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -71,11 +74,50 @@ func (receiver PageRefGrpcService) UpdateAndAccept(req *pb.PageRefServiceUpdateR
 	return nil
 }
 
+func (receiver PageRefGrpcService) Update(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
+	var items []model.PageRef
+
+	for _, record := range req.List {
+		items = append(items, convertBasePageRef(record))
+	}
+
+	receiver.service.BulkWrite2(items)
+
+	return nil, nil
+}
+
+func (receiver PageRefGrpcService) Create(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
+	var items []model.PageRef
+
+	for _, record := range req.List {
+		items = append(items, convertBasePageRef(record))
+	}
+
+	receiver.service.BulkInsert(items)
+
+	return nil, nil
+}
+
 func convertPageRef(ref *model.PageRef) *base.PageRef {
 	return &base.PageRef{
 		Id:          ref.Id.String(),
 		WebsiteName: ref.WebsiteName,
 		Url:         ref.Url,
 		Tags:        *ref.Tags,
+	}
+}
+
+func convertBasePageRef(record *base.PageRef) model.PageRef {
+	id, err := uuid.FromString(record.String())
+
+	lib.Check(err)
+
+	return model.PageRef{
+		Id:          id,
+		WebsiteName: record.WebsiteName,
+		Url:         record.Url,
+		State:       record.State.String(),
+		Status:      record.Status.String(),
+		Tags:        &record.Tags,
 	}
 }
