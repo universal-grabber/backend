@@ -99,11 +99,17 @@ func (receiver PageRefGrpcService) Create(_ context.Context, req *pb.PageRefList
 }
 
 func convertPageRef(ref *model.PageRef) *base.PageRef {
+	var tags []string
+
+	if ref.Tags != nil {
+		tags = *ref.Tags
+	}
+
 	return &base.PageRef{
 		Id:          ref.Id.String(),
 		WebsiteName: ref.WebsiteName,
 		Url:         ref.Url,
-		Tags:        *ref.Tags,
+		Tags:        tags,
 	}
 }
 
