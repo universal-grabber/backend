@@ -316,6 +316,8 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) {
 	var models []mongo.WriteModel
 
 	for _, pageRef := range list {
+		helper.PageRefLogger(&pageRef, "bulk-insert").Debug("update page-ref")
+
 		oldId := pageRef.Id
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
 		if contains(*pageRef.Tags, "delete") {
@@ -367,17 +369,21 @@ func (service *PageRefService) BulkInsert(list []model.PageRef) {
 	existingItems := make(map[string]bool)
 
 	for _, pageRef := range list {
+		helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref")
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
 
 		if contains(*pageRef.Tags, "delete") {
+			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by delete tag")
 			continue
 		}
 
 		if !contains(*pageRef.Tags, "allow-import") {
+			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by allow import tag")
 			continue
 		}
 
 		if existingItems[pageRef.Url] {
+			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by existing rule")
 			continue
 		}
 
