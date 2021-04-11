@@ -108,7 +108,7 @@ func convertPageRef(ref *model.PageRef) *base.PageRef {
 }
 
 func convertBasePageRef(record *base.PageRef) model.PageRef {
-	id, err := uuid.FromString(record.String())
+	id, err := uuid.FromString(record.Id)
 
 	lib.Check(err)
 
