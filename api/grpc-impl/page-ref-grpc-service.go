@@ -109,6 +109,8 @@ func convertPageRef(ref *model.PageRef) *base.PageRef {
 		Id:          ref.Id.String(),
 		WebsiteName: ref.WebsiteName,
 		Url:         ref.Url,
+		State:       base.PageRefState(base.PageRefState_value[ref.State]),
+		Status:      base.PageRefStatus(base.PageRefStatus_value[ref.State]),
 		Tags:        tags,
 	}
 }
