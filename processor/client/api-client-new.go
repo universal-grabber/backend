@@ -5,13 +5,11 @@ import (
 	pb "backend/gen/proto/service"
 	"backend/processor/lib"
 	"backend/processor/model"
-	"bytes"
 	"context"
-	"encoding/json"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
-	"net/http"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -145,25 +143,18 @@ func (client *ApiClientNew) bulkUpdate(buffer []*base.PageRef) {
 			log.Printf("panicing update: %s", r)
 		}
 	}()
-	//log.Printf("starting update flush %d items", len(buffer))
-	body, err := json.Marshal(buffer)
 
-	if err != nil {
-		log.Panic(err)
-	}
+	log.Info("updating pageRefs (" + strconv.Itoa(len(buffer)) + ")")
 
-	req, err := http.NewRequest("PATCH", client.config.UgbApiUri+"/api/1.0/page-refs/bulk", bytes.NewReader(body))
+	req := new(pb.PageRefList)
 
-	if err != nil {
-		log.Panic(err)
-	}
+	req.List = buffer
 
-	_, err = http.DefaultClient.Do(req)
+	_, err := client.pageServiceClient.Update(context.TODO(), req)
 
-	if err != nil {
-		log.Panic(err)
-	}
-	//log.Printf("finished update flush %d items", len(buffer))
+	log.Info("updating pageRefs done (" + strconv.Itoa(len(buffer)) + ")")
+
+	lib.Check(err)
 }
 
 func (client *ApiClientNew) bulkInsert(buffer []*base.PageRef) {
@@ -173,23 +164,15 @@ func (client *ApiClientNew) bulkInsert(buffer []*base.PageRef) {
 		}
 	}()
 
-	//log.Printf("starting insert flush %d items", len(buffer))
-	body, err := json.Marshal(buffer)
+	log.Info("inserting pageRefs (" + strconv.Itoa(len(buffer)) + ")")
 
-	if err != nil {
-		log.Panic(err)
-	}
+	req := new(pb.PageRefList)
 
-	req, err := http.NewRequest("POST", client.config.UgbApiUri+"/api/1.0/page-refs/bulk", bytes.NewReader(body))
+	req.List = buffer
 
-	if err != nil {
-		log.Panic(err)
-	}
+	_, err := client.pageServiceClient.Create(context.TODO(), req)
 
-	_, err = http.DefaultClient.Do(req)
+	log.Info("inserting pageRefs end (" + strconv.Itoa(len(buffer)) + ")")
 
-	if err != nil {
-		log.Panic(err)
-	}
-	//log.Printf("finished insert flush %d items", len(buffer))
+	lib.Check(err)
 }
