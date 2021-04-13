@@ -1,7 +1,9 @@
 package tasks
 
 import (
+	"backend/common"
 	"backend/gen/proto/base"
+	pb "backend/gen/proto/service/storage"
 	"backend/processor/client"
 	"backend/processor/lib"
 	"backend/processor/model"
@@ -74,7 +76,7 @@ func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 	if result.Ok {
 		pageRef.Status = task.parseItem(result, pageRef)
 	} else {
-		lib.PageRefLogger(pageRef, "fail-to-get-html").
+		common.PageRefLogger(pageRef, "fail-to-get-html").
 			Warnf("could not get page-ref html")
 		pageRef.Status = base.PageRefStatus_FAILED
 	}
@@ -82,13 +84,13 @@ func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 	return pageRef
 }
 
-func (task *ParseTask) parseItem(result *model.StoreResult, pageRef *base.PageRef) base.PageRefStatus {
-	lib.PageRefLogger(pageRef, "start-parse").
+func (task *ParseTask) parseItem(result *pb.StoreResult, pageRef *base.PageRef) base.PageRefStatus {
+	common.PageRefLogger(pageRef, "start-parse").
 		Trace("starting parse process")
 
 	defer func() {
 		if r := recover(); r != nil {
-			lib.PageRefLogger(pageRef, "parse-panic").
+			common.PageRefLogger(pageRef, "parse-panic").
 				Errorf("panicing parse: %s", r)
 			pageRef.Status = base.PageRefStatus_FAILED
 		}
@@ -102,7 +104,7 @@ func (task *ParseTask) parseItem(result *model.StoreResult, pageRef *base.PageRe
 	}
 
 	if res == nil {
-		lib.PageRefLogger(pageRef, "parse-html-could-not-get").
+		common.PageRefLogger(pageRef, "parse-html-could-not-get").
 			Trace("could not get html file")
 		return base.PageRefStatus_FAILED
 	}
@@ -125,7 +127,7 @@ func (task *ParseTask) parseItem(result *model.StoreResult, pageRef *base.PageRe
 		return base.PageRefStatus_FAILED
 	}
 
-	lib.PageRefLogger(pageRef, "finish-parse").
+	common.PageRefLogger(pageRef, "finish-parse").
 		Trace("finishing parse process")
 
 	return base.PageRefStatus_FINISHED

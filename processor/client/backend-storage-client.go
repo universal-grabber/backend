@@ -2,62 +2,47 @@ package client
 
 import (
 	"backend/gen/proto/base"
+	pb "backend/gen/proto/service/storage"
 	"backend/processor/lib"
 	"backend/processor/model"
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
+	"context"
+	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 type BackendStorageClient struct {
-	config model.Config
+	config               model.Config
+	connection           *grpc.ClientConn
+	storageServiceClient pb.StorageServiceClient
 }
 
 func (client *BackendStorageClient) Init(config model.Config) {
 	client.config = config
+
+	// initialize grpc
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(config.UgbStorageUri, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+
+	client.connection = conn
+
+	client.storageServiceClient = pb.NewStorageServiceClient(conn)
 }
 
-func (client *BackendStorageClient) Store(item *base.PageRef) *model.StoreResult {
-	data, err := json.Marshal(item)
+func (client *BackendStorageClient) Store(item *base.PageRef) *pb.StoreResult {
+	res, err := client.storageServiceClient.Store(context.TODO(), item)
 
 	lib.Check(err)
 
-	resp, err := http.Post(client.config.UgbStorageUri+"/api/1.0/store", "application/json", bytes.NewReader(data))
-
-	lib.Check(err)
-
-	respBytes, err := ioutil.ReadAll(resp.Body)
-
-	lib.Check(err)
-
-	storeResult := new(model.StoreResult)
-
-	err = json.Unmarshal(respBytes, storeResult)
-
-	lib.Check(err)
-
-	return storeResult
+	return res
 }
 
-func (client *BackendStorageClient) Get(item *base.PageRef) *model.StoreResult {
-	data, err := json.Marshal(item)
+func (client *BackendStorageClient) Get(item *base.PageRef) *pb.StoreResult {
+	res, err := client.storageServiceClient.Get(context.TODO(), item)
 
 	lib.Check(err)
 
-	resp, err := http.Post(client.config.UgbStorageUri+"/api/1.0/get", "application/json", bytes.NewReader(data))
-
-	lib.Check(err)
-
-	respBytes, err := ioutil.ReadAll(resp.Body)
-
-	lib.Check(err)
-
-	storeResult := new(model.StoreResult)
-
-	err = json.Unmarshal(respBytes, storeResult)
-
-	lib.Check(err)
-
-	return storeResult
+	return res
 }

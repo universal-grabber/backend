@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"backend/common"
 	"backend/gen/proto/base"
 	log "github.com/sirupsen/logrus"
 	"sync"
@@ -18,7 +19,7 @@ type Processor struct {
 	started            bool
 	wg                 *sync.WaitGroup
 	pageRefReadChannel chan *base.PageRef
-	timeCalc           *TimeCalc
+	timeCalc           *common.TimeCalc
 
 	//progressingPagesMutex *sync.Mutex
 	//progressingPages      map[string]bool
@@ -37,7 +38,7 @@ func (processor *Processor) Start() {
 	//processor.progressingPagesMutex = new(sync.Mutex)
 	//processor.progressingPages = make(map[string]bool)
 
-	processor.timeCalc = new(TimeCalc)
+	processor.timeCalc = new(common.TimeCalc)
 	processor.timeCalc.Init(processor.State.String())
 
 	// init
@@ -96,7 +97,7 @@ func (processor *Processor) runProcess2(i int, pageRef *base.PageRef) {
 func (processor *Processor) processItem(i int, pageRef *base.PageRef) {
 	origPageRef := pageRef
 
-	PageRefLogger(pageRef, "before-run-process-item").
+	common.PageRefLogger(pageRef, "before-run-process-item").
 		Debug("sending item to process")
 
 	pageRef = processor.runProcessItem(pageRef, i)
@@ -113,7 +114,7 @@ func (processor *Processor) processItem(i int, pageRef *base.PageRef) {
 		pageRef.Status = base.PageRefStatus_FAILED
 	}
 
-	PageRefLogger(pageRef, "after-run-process-item-status-fix").
+	common.PageRefLogger(pageRef, "after-run-process-item-status-fix").
 		Debug("process result for single item")
 
 	processor.ApiClient.UpdatePageRef(pageRef)
@@ -122,7 +123,7 @@ func (processor *Processor) processItem(i int, pageRef *base.PageRef) {
 func (processor *Processor) runProcessItem(pageRef *base.PageRef, processorIndex int) *base.PageRef {
 	defer func() {
 		if r := recover(); r != nil {
-			PageRefLogger(pageRef, "run-process-panic").
+			common.PageRefLogger(pageRef, "run-process-panic").
 				Errorf("panicing process[%d]: %s / %s / %s / %s",
 					processorIndex,
 					processor.State,

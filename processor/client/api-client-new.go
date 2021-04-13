@@ -1,8 +1,9 @@
 package client
 
 import (
+	"backend/common"
 	"backend/gen/proto/base"
-	pb "backend/gen/proto/service"
+	pb "backend/gen/proto/service/api"
 	"backend/processor/lib"
 	"backend/processor/model"
 	"context"
@@ -47,7 +48,7 @@ func (client *ApiClientNew) Init(config model.Config) {
 }
 
 func (client *ApiClientNew) AcceptPages(state base.PageRefState) chan *base.PageRef {
-	timeCalc := new(lib.TimeCalc)
+	timeCalc := new(common.TimeCalc)
 	timeCalc.Init("timer1")
 
 	log.Debugf("starting to accept pages for state %s", state)

@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"backend/common"
 	"backend/gen/proto/base"
 	"backend/processor/client"
 	"backend/processor/lib"
@@ -71,7 +72,7 @@ func (task *PublishTask) Run() {
 }
 
 func (task *PublishTask) process(pageRef *base.PageRef) *base.PageRef {
-	lib.PageRefLogger(pageRef, "start-publish").
+	common.PageRefLogger(pageRef, "start-publish").
 		Trace("starting publish process")
 
 	cur, err := task.pageDataCol.Find(context.TODO(), bson.M{"_id": pageRef.Id})
@@ -91,13 +92,13 @@ func (task *PublishTask) process(pageRef *base.PageRef) *base.PageRef {
 
 		return pageRef
 	} else {
-		lib.PageRefLogger(pageRef, "publish-record-not-found").
+		common.PageRefLogger(pageRef, "publish-record-not-found").
 			Warn("record not found to publish")
 	}
 
 	pageRef.Status = base.PageRefStatus_FAILED
 
-	lib.PageRefLogger(pageRef, "finish-publish").
+	common.PageRefLogger(pageRef, "finish-publish").
 		Trace("publish operation finished")
 
 	return pageRef
@@ -128,7 +129,7 @@ func (task *PublishTask) upload(data *model.PageData, pageRef *base.PageRef) {
 	if resp.StatusCode != 200 {
 		respBytes, err := ioutil.ReadAll(resp.Body)
 
-		lib.PageRefLogger(pageRef, "upload-error").
+		common.PageRefLogger(pageRef, "upload-error").
 			Errorf("could not upload: %d / %s / %s", resp.StatusCode, string(respBytes), err)
 	}
 }
