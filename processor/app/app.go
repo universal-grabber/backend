@@ -23,10 +23,15 @@ type App struct {
 }
 
 func (app *App) Init() {
+	log.Info("initializing clients")
 
 	app.initClients()
 
+	log.Info("initializing tasks")
+
 	app.initTasks()
+
+	log.Info("initialization finished")
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 }
@@ -67,9 +72,13 @@ func (app *App) initClients() {
 	app.modelProcessorClient = new(client.ModelProcessorClient)
 	app.publisherClient = new(client.PublisherClient)
 
+	log.Debug("initializing api client")
 	app.apiClient.Init(app.GetConfig())
+	log.Debug("initializing backend storage")
 	app.backendStorageClient.Init(app.GetConfig())
+	log.Debug("initializing model processor")
 	app.modelProcessorClient.Init(app.GetConfig())
+	log.Debug("initializing publisher")
 	app.publisherClient.Init(app.GetConfig())
 }
 
@@ -88,6 +97,7 @@ func (app *App) initTasks() {
 			continue
 		}
 
+		log.Debug("Initializing task: " + task.Name())
 		task.Init(app)
 	}
 }
