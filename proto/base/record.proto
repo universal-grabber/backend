@@ -14,14 +14,14 @@ message Reference {
 
 
 message Record {
-  repeated string tags                      = 1;
-  string description                        = 2;
-  map< string, google . protobuf. Any> data = 3;
-  map< string, google . protobuf. Any> meta = 4;
+  repeated string tags      = 1;
+  string description        = 2;
+  map< string, bytes > data = 3;
+  map< string, bytes > meta = 4;
 
-  string ref                                = 101;
-  string source                             = 102;
-  string sourceUrl                          = 103;
-  string objectType                         = 104;
-  string name                               = 105;
+  string ref                = 101;
+  string source             = 102;
+  string sourceUrl          = 103;
+  string objectType         = 104;
+  string name               = 105;
 }

@@ -1,8 +1,3 @@
 syntax = 'proto3';
 
-import "base/page-ref-status.proto";
-import "base/page-ref-state.proto";
-import "base/page-ref.proto";
-import "base/empty.proto";
-
 option go_package = "backend/gen/proto/service/api";
