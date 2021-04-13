@@ -1,19 +1,23 @@
 package app
 
 import (
+	"backend/common"
+	"backend/gen/proto/base"
+	pb "backend/gen/proto/service/storage"
+	"backend/processor/lib"
 	"backend/storage/engine"
-	"backend/storage/lib"
-	"backend/storage/model"
+	"context"
 	"crypto/tls"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
+	"google.golang.org/grpc"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 )
-import "github.com/gin-gonic/gin"
 
 type App struct {
 	Addr     string
@@ -21,18 +25,32 @@ type App struct {
 	KeyFile  string
 
 	downloaderClient *http.Client
+
+	pb.UnimplementedStorageServiceServer
 }
 
 func (app *App) Run() {
-	r := gin.New()
-
-	app.routes(r)
-
 	log.Info("Started\n")
 
 	app.initDownloadClient()
 
-	lib.Check(r.RunTLS(app.Addr, app.CertFile, app.KeyFile))
+	app.runGrpc()
+}
+
+func (app *App) runGrpc() {
+	lis, err := net.Listen("tcp", "0.0.0.0:6565")
+
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+
+	pb.RegisterStorageServiceServer(s, app)
+
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+
 }
 
 func (app *App) initDownloadClient() {
@@ -44,72 +62,54 @@ func (app *App) initDownloadClient() {
 	}
 }
 
-func (app *App) routes(r *gin.Engine) {
-	r.POST("/api/1.0/get", app.get)
-	r.POST("/api/1.0/store", app.store)
-}
-
-func (app *App) store(c *gin.Context) {
-	pageRef := new(model.PageRef)
-
-	err := c.BindJSON(pageRef)
-
-	lib.Check(err)
-
+func (app *App) Get(ctx context.Context, pageRef *base.PageRef) (*pb.StoreResult, error) {
 	requestId := uuid.NewV4()
-	lib.PageRefLogger(pageRef, "receive-store-request").Debugf("requestId: %s", requestId)
+	common.PageRefLogger(pageRef, "receive-get-request").Debugf("requestId: %s", requestId)
+
+	storeResult, err := app.read(pageRef, true)
+
+	common.CheckWithPageRef(err, pageRef)
+
+	return storeResult, nil
+}
+func (app *App) Store(ctx context.Context, pageRef *base.PageRef) (*pb.StoreResult, error) {
+	requestId := uuid.NewV4()
+	common.PageRefLogger(pageRef, "receive-store-request").Debugf("requestId: %s", requestId)
 
 	storeResult, err := app.read(pageRef, false)
 
-	lib.CheckWithPageRef(err, pageRef)
+	common.CheckWithPageRef(err, pageRef)
 
 	if storeResult == nil {
-		storeResult = new(model.StoreResult)
+		storeResult = new(pb.StoreResult)
 		storeResult.Ok = false
 	}
 	storeResult.Content = ""
 
-	c.JSON(200, storeResult)
+	return storeResult, nil
 }
 
-func (app *App) get(c *gin.Context) {
-	pageRef := new(model.PageRef)
-
-	err := c.BindJSON(pageRef)
-
-	lib.Check(err)
-
-	requestId := uuid.NewV4()
-	lib.PageRefLogger(pageRef, "receive-get-request").Debugf("requestId: %s", requestId)
-
-	storeResult, err := app.read(pageRef, true)
-
-	lib.CheckWithPageRef(err, pageRef)
-
-	c.JSON(200, storeResult)
-}
-
-func (app *App) read(pageRef *model.PageRef, require bool) (*model.StoreResult, error) {
+func (app *App) read(pageRef *base.PageRef, require bool) (*pb.StoreResult, error) {
 	// check if download needed
 	storage := app.getStorageBackend(pageRef)
 
-	rec, err := storage.Get(pageRef.Id)
+	rec, err := storage.Get(toUUID(pageRef.GetId()))
 
 	if err != nil {
 		return nil, err
 	}
 
-	forceDownload := pageRef.Tags != nil && contains(*pageRef.Tags, "force-download")
-	lazyDownload := pageRef.Tags != nil && contains(*pageRef.Tags, "lazy-download")
+	forceDownload := pageRef.Tags != nil && contains(pageRef.Tags, "force-download")
+	lazyDownload := pageRef.Tags != nil && contains(pageRef.Tags, "lazy-download")
 
 	exists := rec != nil
 
 	if len(rec) < 10000 {
 		exists = false
 
-		lib.PageRefLogger(pageRef, "delete-page-ref").Debugf("deleting")
-		ok, err := storage.Delete(pageRef.Id)
-		lib.PageRefLogger(pageRef, "delete-page-ref").Debugf("delete finished: %v", ok)
+		common.PageRefLogger(pageRef, "delete-page-ref").Debugf("deleting")
+		ok, err := storage.Delete(toUUID(pageRef.Id))
+		common.PageRefLogger(pageRef, "delete-page-ref").Debugf("delete finished: %v", ok)
 
 		if err != nil {
 			return nil, err
@@ -118,7 +118,7 @@ func (app *App) read(pageRef *model.PageRef, require bool) (*model.StoreResult, 
 
 	needsDownload := forceDownload || (!exists && (!lazyDownload || require))
 
-	storeResult := new(model.StoreResult)
+	storeResult := new(pb.StoreResult)
 	var result []byte
 
 	if needsDownload {
@@ -127,17 +127,17 @@ func (app *App) read(pageRef *model.PageRef, require bool) (*model.StoreResult, 
 		for {
 			downloadTry++
 
-			lib.PageRefLogger(pageRef, "try-download").Tracef("downloading")
+			common.PageRefLogger(pageRef, "try-download").Tracef("downloading")
 			result = app.download(pageRef.Url)
-			lib.PageRefLogger(pageRef, "try-download").Tracef("download result: %d bytes", len(result))
+			common.PageRefLogger(pageRef, "try-download").Tracef("download result: %d bytes", len(result))
 
 			storeResult.Content = string(result)
-			storeResult.Size = len(result)
+			storeResult.Size = int32(len(result))
 
-			tryAllowed := storeResult.State == model.NO_CONTENT
+			tryAllowed := storeResult.State == pb.State_NO_CONTENT
 
 			if tryAllowed {
-				lib.PageRefLogger(pageRef, "try-download").Debugf("try count: %d", downloadTry)
+				common.PageRefLogger(pageRef, "try-download").Debugf("try count: %d", downloadTry)
 			}
 
 			if !tryAllowed {
@@ -145,7 +145,7 @@ func (app *App) read(pageRef *model.PageRef, require bool) (*model.StoreResult, 
 			}
 
 			if tryAllowed && downloadTry > 10 {
-				lib.PageRefLogger(pageRef, "try-download-fail").Warnf("no content")
+				common.PageRefLogger(pageRef, "try-download-fail").Warnf("no content")
 				break
 			}
 		}
@@ -154,18 +154,18 @@ func (app *App) read(pageRef *model.PageRef, require bool) (*model.StoreResult, 
 
 		if storeResult.Ok {
 			if exists {
-				_, err := storage.Delete(pageRef.Id)
+				_, err := storage.Delete(toUUID(pageRef.GetId()))
 
 				if err != nil {
 					return nil, err
 				}
 			}
 
-			lib.PageRefLogger(pageRef, "store-page-ref").Debugf("storing page ref")
-			err = storage.Add(pageRef.Id, result)
+			common.PageRefLogger(pageRef, "store-page-ref").Debugf("storing page ref")
+			err = storage.Add(toUUID(pageRef.GetId()), result)
 
 			if err != nil {
-				lib.PageRefLogger(pageRef, "store-page-ref-fail").Warnf("store page ref failed: %s", err)
+				common.PageRefLogger(pageRef, "store-page-ref-fail").Warnf("store page ref failed: %s", err)
 				return nil, err
 			}
 		} else {
@@ -175,12 +175,12 @@ func (app *App) read(pageRef *model.PageRef, require bool) (*model.StoreResult, 
 		return storeResult, err
 	} else {
 		if rec != nil {
-			storeResult.State = model.ALREADY_DOWNLOADED
+			storeResult.State = pb.State_ALREADY_DOWNLOADED
 			storeResult.Content = string(rec)
-			storeResult.Size = len(rec)
+			storeResult.Size = int32(len(rec))
 			checkStoreResult(storeResult, pageRef)
 		} else {
-			storeResult.State = model.SKIPPED
+			storeResult.State = pb.State_SKIPPED
 		}
 
 		storeResult.Ok = true
@@ -188,26 +188,34 @@ func (app *App) read(pageRef *model.PageRef, require bool) (*model.StoreResult, 
 	}
 }
 
-func checkStoreResult(result *model.StoreResult, pageRef *model.PageRef) {
+func toUUID(id string) uuid.UUID {
+	res, err := uuid.FromString(id)
+
+	lib.Check(err)
+
+	return res
+}
+
+func checkStoreResult(result *pb.StoreResult, pageRef *base.PageRef) {
 	if result.Size < 10000 {
 		if strings.Contains(result.Content, "DDoS protection") {
 			log.Warn("cloudflare protection: " + pageRef.Url)
-			result.State = model.CLOUDFLARE_DDOS_PROTECTION
+			result.State = pb.State_CLOUDFLARE_DDOS_PROTECTION
 		}
 
 		if len(result.Content) > 0 {
 			log.Warnf("low content size %s SIZE : %d", pageRef.Url, len(result.Content))
 			log.Debugf("low content size %s CONTENT : %s", pageRef.Url, result.Content)
-			result.State = model.LOW_CONTENT_SIZE
+			result.State = pb.State_LOW_CONTENT_SIZE
 		} else if len(result.Content) == 0 {
 			log.Warnf("no content for %s", pageRef.Url) // try again
-			result.State = model.NO_CONTENT
+			result.State = pb.State_NO_CONTENT
 		}
 
 		result.Ok = false
 	} else {
 		result.Ok = true
-		result.State = model.DOWNLOADED
+		result.State = pb.State_DOWNLOADED
 		log.Debugf("page-ref downloaded %s", pageRef.Url)
 	}
 }
@@ -239,8 +247,8 @@ func (app *App) download(url string) []byte {
 	return []byte(content)
 }
 
-func (app *App) getStorageBackend(ref *model.PageRef) engine.StorageEngineBackend {
-	if contains(*ref.Tags, "mongo-old") {
+func (app *App) getStorageBackend(ref *base.PageRef) engine.StorageEngineBackend {
+	if contains(ref.Tags, "mongo-old") {
 		return engine.GetEngineBackendByClassName("mongo-old")
 	} else {
 		return engine.GetEngineBackendByClassName("mongo-store")

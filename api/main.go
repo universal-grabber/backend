@@ -6,7 +6,7 @@ import (
 	"backend/api/grpc-impl"
 	"backend/api/helper"
 	"backend/api/service"
-	pb "backend/gen/proto/service"
+	pb "backend/gen/proto/service/api"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"

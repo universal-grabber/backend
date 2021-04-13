@@ -16,4 +16,6 @@ mkdir $DST_DIR
 
 protoc -I=$SRC_DIR --go_out=$DST_DIR --go_opt=module=backend/gen $SRC_DIR/base/*
 
-protoc -I=$SRC_DIR --go_out=$DST_DIR --go-grpc_out=$DST_DIR --go_opt=module=backend/gen --go-grpc_opt=module=backend/gen $SRC_DIR/service/*
+protoc -I=$SRC_DIR --go_out=$DST_DIR --go-grpc_out=$DST_DIR --go_opt=module=backend/gen --go-grpc_opt=module=backend/gen $SRC_DIR/service/api/*
+protoc -I=$SRC_DIR --go_out=$DST_DIR --go-grpc_out=$DST_DIR --go_opt=module=backend/gen --go-grpc_opt=module=backend/gen $SRC_DIR/service/storage/*
+protoc -I=$SRC_DIR --go_out=$DST_DIR --go-grpc_out=$DST_DIR --go_opt=module=backend/gen --go-grpc_opt=module=backend/gen $SRC_DIR/service/model-parser/*

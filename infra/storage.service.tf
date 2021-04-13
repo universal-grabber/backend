@@ -18,5 +18,11 @@ resource "kubernetes_service" "ugb-storage" {
       port = 443
       target_port = 8443
     }
+
+    port {
+      name = "grpc"
+      port = 6565
+      target_port = 6565
+    }
   }
 }

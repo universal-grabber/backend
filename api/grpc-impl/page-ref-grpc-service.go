@@ -4,10 +4,10 @@ import (
 	"backend/api/helper"
 	"backend/api/model"
 	"backend/api/service"
+	"backend/common"
 	commonModel "backend/common/model"
 	"backend/gen/proto/base"
-	pb "backend/gen/proto/service"
-	"backend/storage/lib"
+	pb "backend/gen/proto/service/api"
 	"context"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
@@ -118,7 +118,7 @@ func convertPageRef(ref *model.PageRef) *base.PageRef {
 func convertBasePageRef(record *base.PageRef) model.PageRef {
 	id, err := uuid.FromString(record.Id)
 
-	lib.Check(err)
+	common.Check(err)
 
 	return model.PageRef{
 		Id:          id,

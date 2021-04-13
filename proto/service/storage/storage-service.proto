@@ -1,0 +1,26 @@
+syntax = 'proto3';
+
+import "base/page-ref.proto";
+
+option go_package = "backend/gen/proto/service/storage";
+
+enum State {
+  CLOUDFLARE_DDOS_PROTECTION = 0;
+  LOW_CONTENT_SIZE           = 1;
+  NO_CONTENT                 = 2;
+  ALREADY_DOWNLOADED         = 3;
+  DOWNLOADED                 = 4;
+  SKIPPED                    = 5;
+}
+
+message StoreResult {
+  string content = 1;
+  int32 size     = 2;
+  bool ok        = 3;
+  State state    = 4;
+}
+
+service StorageService {
+  rpc get (PageRef) returns (StoreResult);
+  rpc store (PageRef) returns (StoreResult);
+}

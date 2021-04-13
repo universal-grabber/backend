@@ -1,0 +1,14 @@
+syntax = 'proto3';
+
+import "base/record.proto";
+
+option go_package = "backend/gen/proto/service/model-parser";
+
+message ParseRequest {
+  string url     = 1;
+  string content = 2;
+}
+
+service ModelParserService {
+  rpc parse (ParseRequest) returns (Record);
+}
