@@ -28,7 +28,7 @@ resource "kubernetes_deployment" "ugb-processor" {
 
           env {
             name = "STORAGE_API"
-            value = "ugb-storage:6555"
+            value = "ugb-storage:6565"
           }
 
           env {
