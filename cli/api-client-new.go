@@ -1,7 +1,7 @@
 package main
 
 import (
-	pb "backend/gen/proto/service"
+	pb "backend/gen/proto/service/api"
 	"backend/processor/model"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
