@@ -1,0 +1,29 @@
+syntax = 'proto3';
+
+import "base/empty.proto";
+
+option go_package = "backend/gen/proto/service/api";
+
+enum LogLevel {
+  TRACE = 0;
+  DEBUG = 1;
+  INFO  = 2;
+  WARN  = 3;
+  ERROR = 4;
+}
+
+message InitConfig {
+  map< string, string > serviceHosts = 1;
+}
+
+message LoggingConfig {
+  map< string, string > serviceLogs = 1;
+  map< string, string > sourceLogs  = 2; // source/website specific logs
+}
+
+service ConfigService {
+  rpc getInitConfig (Empty) returns (InitConfig);
+  rpc getLoggingConfig (Empty) returns (LoggingConfig);
+  rpc updateLoggingConfig (Empty) returns (Empty);
+  rpc resetLogs (Empty) returns (Empty);
+}

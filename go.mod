@@ -12,6 +12,7 @@ require (
 	github.com/robfig/cron v1.2.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/urfave/cli/v2 v2.3.0
 	go.mongodb.org/mongo-driver v1.5.1
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e

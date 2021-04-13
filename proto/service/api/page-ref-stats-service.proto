@@ -1,3 +1,29 @@
 syntax = 'proto3';
 
+import "base/page-ref-status.proto";
+import "base/page-ref-state.proto";
+
 option go_package = "backend/gen/proto/service/api";
+
+message PageRefStatsRequest {
+  repeated string websiteName   = 1;
+  repeated PageRefState state   = 2;
+  repeated PageRefStatus status = 3;
+  repeated string tags          = 4;
+}
+
+message Stat {
+  string websiteName   = 1;
+  PageRefState state   = 2;
+  PageRefStatus status = 3;
+
+  int32 count          = 4;
+}
+
+message PageRefStatResult {
+  repeated Stat stats = 1;
+}
+
+service PageRefStatsService {
+  rpc getStats (PageRefStatsRequest) returns (PageRefStatResult);
+}
