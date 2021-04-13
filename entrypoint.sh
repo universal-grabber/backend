@@ -11,7 +11,7 @@ term_handler() {
 
 trap 'kill ${!}; term_handler' SIGTERM
 
-/bin/$EXEC &
+GRPC_VERBOSITY=debug GRPC_TRACE=tcp,http,api /bin/$EXEC &
 pid="$!"
 
 while true
