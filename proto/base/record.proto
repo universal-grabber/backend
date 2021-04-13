@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/any.proto";
-
 option go_package = "backend/gen/proto/base";
 
 message Reference {
