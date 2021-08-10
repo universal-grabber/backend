@@ -5,6 +5,8 @@ resource "kubernetes_service" "ugb-api" {
     labels = {
       app = local.base_name_api
     }
+
+    namespace = local.base_namespace
   }
   spec {
     selector = {

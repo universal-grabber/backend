@@ -5,6 +5,8 @@ resource "kubernetes_deployment" "ugb-api" {
     labels = {
       app = local.base_name_api
     }
+
+    namespace = local.base_namespace
   }
   spec {
     selector {
@@ -20,6 +22,8 @@ resource "kubernetes_deployment" "ugb-api" {
         labels = {
           app = local.base_name_api
         }
+
+        namespace = local.base_namespace
       }
       spec {
         container {
