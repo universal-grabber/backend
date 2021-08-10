@@ -1,7 +1,7 @@
 variable "DOCKER_IMG_TAG" {}
 
 locals {
-  repository = "hub.tisserv.net"
+  repository = "hub.kube.tisserv.net"
 
   base_name_api = "ugb-api"
   base_name_storage = "ugb-storage"
