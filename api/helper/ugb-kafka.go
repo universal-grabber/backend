@@ -24,7 +24,7 @@ func (s *UgbKafka) getReader(topic string, group string) *kafka.Reader {
 		Brokers:  []string{kafkaHost},
 		Topic:    topic,
 		GroupID:  group,
-		MinBytes: 10,   // 10KB
+		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB,
 	})
 }

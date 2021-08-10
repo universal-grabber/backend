@@ -32,7 +32,7 @@ resource "kubernetes_deployment" "ugb-api" {
         }
 
         image_pull_secrets {
-          name = "tisserv-hub"
+          name = "regcred"
         }
       }
     }
