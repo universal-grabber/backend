@@ -35,9 +35,9 @@ node {
                 sh "docker rmi -f hub.kube.tisserv.net/ugb-model-parser:v${env.BUILD_NUMBER}"
             }
 
-            stage ('deploy tisworkstation') {
+            stage ('deploy kube.tisserv.net') {
                sh '''
-                   cd infra
+                   cd infra-cloud
 
                    terraform init
                    terraform validate .
@@ -47,9 +47,9 @@ node {
                '''
             }
 
-            stage ('deploy kube.tisserv.net') {
+            stage ('deploy tisworkstation') {
                sh '''
-                   cd infra-cloud
+                   cd infra
 
                    terraform init
                    terraform validate .
