@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const kafkaHost = "localhost:9092"
+const kafkaHost = "ug.tisserv.net:9092"
 
 var (
 	UgbKafkaInstance = new(UgbKafka)
