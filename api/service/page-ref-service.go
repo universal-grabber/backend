@@ -320,7 +320,7 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) {
 
 		oldId := pageRef.Id
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
-		if contains(*pageRef.Tags, "delete") {
+		if contains(*pageRef.Data.Tags, "delete") {
 			// delete dangling page-ref
 			writeModel := mongo.NewDeleteOneModel()
 			writeModel.Filter = bson.M{"_id": oldId}
@@ -372,31 +372,31 @@ func (service *PageRefService) BulkInsert(list []model.PageRef) {
 		helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref")
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
 
-		if contains(*pageRef.Tags, "delete") {
+		if contains(*pageRef.Data.Tags, "delete") {
 			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by delete tag")
 			continue
 		}
 
-		if !contains(*pageRef.Tags, "allow-import") {
+		if !contains(*pageRef.Data.Tags, "allow-import") {
 			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by allow import tag")
 			continue
 		}
 
-		if existingItems[pageRef.Url] {
+		if existingItems[pageRef.Data.Url] {
 			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by existing rule")
 			continue
 		}
 
-		existingItems[pageRef.Url] = true
+		existingItems[pageRef.Data.Url] = true
 
 		insertList = append(insertList, pageRef)
-		insertUrls = append(insertUrls, pageRef.Url)
+		insertUrls = append(insertUrls, pageRef.Data.Url)
 	}
 
 	existingUrls := service.PageRefExistsMultiViaUrl(insertUrls)
 
 	for _, pageRef := range insertList {
-		if contains(existingUrls, pageRef.Url) {
+		if contains(existingUrls, pageRef.Data.Url) {
 			continue
 		}
 		writeModel := mongo.NewInsertOneModel()

@@ -8,10 +8,10 @@ import (
 func PageRefLogger(pageRef *model.PageRef, operation string) *log.Entry {
 	return log.WithFields(map[string]interface{}{
 		"pageRefId":   pageRef.Id.String(),
-		"url":         pageRef.Url,
-		"state":       pageRef.State,
-		"status":      pageRef.Status,
-		"websiteName": pageRef.WebsiteName,
+		"url":         pageRef.Data.Url,
+		"state":       pageRef.Data.State,
+		"status":      pageRef.Data.Status,
+		"websiteName": pageRef.Data.Source,
 		"operation":   operation,
 	})
 }

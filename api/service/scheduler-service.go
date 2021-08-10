@@ -125,7 +125,7 @@ func (s *SchedulerServiceImpl) reconfigureSchedulerForWebsite(website *model.Web
 func (s *SchedulerServiceImpl) ConfigurePageRef(pageRef *model.PageRef) {
 	s.applyTags(pageRef)
 
-	if pageRef.Status == "FINISHED" {
+	if pageRef.Data.Status == "FINISHED" {
 		s.ConfigureNextTask(pageRef)
 	}
 
@@ -133,26 +133,26 @@ func (s *SchedulerServiceImpl) ConfigurePageRef(pageRef *model.PageRef) {
 }
 
 func (s *SchedulerServiceImpl) ConfigureNextTask(ref *model.PageRef) {
-	oldState := ref.State
-	if contains(*ref.Tags, "deep-scan") && ref.State == "DOWNLOAD" {
-		ref.State = "DEEP_SCAN"
-		ref.Status = "PENDING"
-	} else if contains(*ref.Tags, "allow-parse") && ref.State == "DOWNLOAD" {
-		ref.State = "PARSE"
-		ref.Status = "PENDING"
-	} else if contains(*ref.Tags, "allow-parse") && ref.State == "DEEP_SCAN" {
-		ref.State = "PARSE"
-		ref.Status = "PENDING"
-	} else if ref.State == "PARSE" {
-		ref.State = "PUBLISH"
-		ref.Status = "PENDING"
+	oldState := ref.Data.State
+	if contains(*ref.Data.Tags, "deep-scan") && ref.Data.State == "DOWNLOAD" {
+		ref.Data.State = "DEEP_SCAN"
+		ref.Data.Status = "PENDING"
+	} else if contains(*ref.Data.Tags, "allow-parse") && ref.Data.State == "DOWNLOAD" {
+		ref.Data.State = "PARSE"
+		ref.Data.Status = "PENDING"
+	} else if contains(*ref.Data.Tags, "allow-parse") && ref.Data.State == "DEEP_SCAN" {
+		ref.Data.State = "PARSE"
+		ref.Data.Status = "PENDING"
+	} else if ref.Data.State == "PARSE" {
+		ref.Data.State = "PUBLISH"
+		ref.Data.Status = "PENDING"
 	}
 
 	helper.PageRefLogger(ref, "proceed-next-task").Debugf("proceeding to next task from %s", oldState)
 }
 
 func (s *SchedulerServiceImpl) ConfigurePageUrl(pageRef *model.PageRef) {
-	urlObj, err := url.Parse(pageRef.Url)
+	urlObj, err := url.Parse(pageRef.Data.Url)
 
 	if err != nil {
 		log.Panic(err)
@@ -167,7 +167,7 @@ func (s *SchedulerServiceImpl) ConfigurePageUrl(pageRef *model.PageRef) {
 	urlObj.RawQuery = ""
 
 	var queryKey = make(map[string]bool)
-	for _, tag := range findSuffixTags(*pageRef.Tags, "allow-query-") {
+	for _, tag := range findSuffixTags(*pageRef.Data.Tags, "allow-query-") {
 		param := tag[len("allow-query-"):]
 
 		if query.Get(param) != "" {
@@ -187,7 +187,7 @@ func (s *SchedulerServiceImpl) ConfigurePageUrl(pageRef *model.PageRef) {
 }
 
 func rePrepareUrl(ref *model.PageRef, newUrl string) {
-	if ref.Url == newUrl {
+	if ref.Data.Url == newUrl {
 		return
 	}
 
@@ -195,27 +195,27 @@ func rePrepareUrl(ref *model.PageRef, newUrl string) {
 
 	id, _ := uuid.FromString(helper.NamedUUID([]byte(newUrl)))
 	ref.Id = id
-	ref.Url = newUrl
+	ref.Data.Url = newUrl
 }
 
 func (s *SchedulerServiceImpl) applyTags(pageRef *model.PageRef) {
-	if s.tagMatchers[pageRef.WebsiteName] == nil {
+	if s.tagMatchers[pageRef.Data.Source] == nil {
 		return
 	}
 
-	if pageRef.Tags == nil {
-		pageRef.Tags = &[]string{}
+	if pageRef.Data.Tags == nil {
+		pageRef.Data.Tags = &[]string{}
 	}
 
-	for _, tagMatcher := range s.tagMatchers[pageRef.WebsiteName] {
+	for _, tagMatcher := range s.tagMatchers[pageRef.Data.Source] {
 		if s.checkPageRefMatchesPattern(tagMatcher, pageRef) {
 			for _, tag := range tagMatcher.Tags {
-				*pageRef.Tags = append(*pageRef.Tags, tag)
+				*pageRef.Data.Tags = append(*pageRef.Data.Tags, tag)
 			}
 		}
 	}
 
-	*pageRef.Tags = unique(*pageRef.Tags)
+	*pageRef.Data.Tags = unique(*pageRef.Data.Tags)
 }
 
 func unique(arr []string) []string {
@@ -250,7 +250,7 @@ func (s *SchedulerServiceImpl) checkPageRefMatchesPattern(matcher model.TagMatch
 		r := s.getRegexp(matcher.Pattern)
 
 		if r != nil {
-			res := r.Match([]byte(ref.Url))
+			res := r.Match([]byte(ref.Data.Url))
 
 			if res {
 				return true
@@ -262,7 +262,7 @@ func (s *SchedulerServiceImpl) checkPageRefMatchesPattern(matcher model.TagMatch
 		r := s.getRegexp(pattern)
 
 		if r != nil {
-			res := r.Match([]byte(ref.Url))
+			res := r.Match([]byte(ref.Data.Url))
 
 			if res {
 				return true
@@ -304,12 +304,14 @@ func (s *SchedulerServiceImpl) reconfigureEntryPoints(website *model.WebSite) {
 
 		tags := append([]string{}, "entry-point", "deep-scan")
 		pageRef := model.PageRef{
-			Id:          id,
-			WebsiteName: website.Name,
-			Url:         entryPoint,
-			State:       "TODO",
-			Status:      "PENDING",
-			Tags:        &tags,
+			Id: id,
+			Data: model.PageRefData{
+				Source: website.Name,
+				Url:    entryPoint,
+				State:  "TODO",
+				Status: "PENDING",
+				Tags:   &tags,
+			},
 		}
 
 		s.ConfigurePageRef(&pageRef)

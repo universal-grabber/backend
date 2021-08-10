@@ -2,7 +2,7 @@ package model
 
 import uuid "github.com/satori/go.uuid"
 
-type PageRef struct {
+type PageRefResource struct {
 	Id    uuid.UUID   `bson:"_id" json:"id"`
 	Title string      `json:"title"`
 	Data  PageRefData `json:"data"`

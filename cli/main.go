@@ -24,11 +24,11 @@ func main() {
 				Name:    "stats",
 				Aliases: []string{"c"},
 				Usage:   "show stats for page reference tasks",
-				ArgsUsage:
-				Action: func(c *cli.Context) error {
-					runStats(c)
-					return nil
-				},
+				//ArgsUsage:
+				//	Action, : func (c *cli.Context) error{
+				//	runStats(c)
+				//	return nil
+				//},
 			},
 			{
 				Name:    "add",
@@ -50,7 +50,7 @@ func main() {
 }
 
 func runStats(c *cli.Context) {
-	apiServices := initApiServices(c)
+	//apiServices := initApiServices(c)
 }
 
 func initApiServices(*cli.Context) ApiServices {

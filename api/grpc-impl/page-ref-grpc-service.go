@@ -101,16 +101,16 @@ func (receiver PageRefGrpcService) Create(_ context.Context, req *pb.PageRefList
 func convertPageRef(ref *model.PageRef) *base.PageRef {
 	var tags []string
 
-	if ref.Tags != nil {
-		tags = *ref.Tags
+	if ref.Data.Tags != nil {
+		tags = *ref.Data.Tags
 	}
 
 	return &base.PageRef{
 		Id:          ref.Id.String(),
-		WebsiteName: ref.WebsiteName,
-		Url:         ref.Url,
-		State:       base.PageRefState(base.PageRefState_value[ref.State]),
-		Status:      base.PageRefStatus(base.PageRefStatus_value[ref.State]),
+		WebsiteName: ref.Data.Source,
+		Url:         ref.Data.Url,
+		State:       base.PageRefState(base.PageRefState_value[ref.Data.State]),
+		Status:      base.PageRefStatus(base.PageRefStatus_value[ref.Data.State]),
 		Tags:        tags,
 	}
 }
@@ -121,11 +121,13 @@ func convertBasePageRef(record *base.PageRef) model.PageRef {
 	common.Check(err)
 
 	return model.PageRef{
-		Id:          id,
-		WebsiteName: record.WebsiteName,
-		Url:         record.Url,
-		State:       record.State.String(),
-		Status:      record.Status.String(),
-		Tags:        &record.Tags,
+		Id: id,
+		Data: model.PageRefData{
+			Source: record.WebsiteName,
+			Url:    record.Url,
+			State:  record.State.String(),
+			Status: record.Status.String(),
+			Tags:   &record.Tags,
+		},
 	}
 }

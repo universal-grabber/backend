@@ -35,7 +35,7 @@ node {
                 sh "docker rmi -f hub.tisserv.net/ugb-model-parser:v${env.BUILD_NUMBER}"
             }
 
-            stage ('deploy') {
+            stage ('deploy tisworkstation') {
                sh '''
                    cd infra
 
@@ -45,7 +45,19 @@ node {
                    terraform refresh -var DOCKER_IMG_TAG=v${BUILD_NUMBER}
                    terraform apply -var DOCKER_IMG_TAG=v${BUILD_NUMBER} -auto-approve
                '''
-           }
+            }
+
+            stage ('deploy kube.tisserv.net') {
+               sh '''
+                   cd infra-cloud
+
+                   terraform init
+                   terraform validate .
+                   terraform plan -var DOCKER_IMG_TAG=v${BUILD_NUMBER}
+                   terraform refresh -var DOCKER_IMG_TAG=v${BUILD_NUMBER}
+                   terraform apply -var DOCKER_IMG_TAG=v${BUILD_NUMBER} -auto-approve
+               '''
+            }
         }
     } catch (err) {
         throw err

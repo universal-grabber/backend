@@ -42,7 +42,7 @@ func (service *TagsServiceImpl) ApplyTagsForWebsite(websiteName string) {
 					Filter: bson.M{"_id": pageRef.Id},
 					Update: bson.M{
 						"$set": bson.M{
-							"tags": pageRef.Tags,
+							"tags": pageRef.Data.Tags,
 						},
 					},
 				})
@@ -64,11 +64,11 @@ func (service *TagsServiceImpl) ApplyTagsForWebsite(websiteName string) {
 
 		check(err)
 
-		oldTags := pageRef.Tags
-		pageRef.Tags = &[]string{}
+		oldTags := pageRef.Data.Tags
+		pageRef.Data.Tags = &[]string{}
 		context2.GetSchedulerService().ConfigurePageRef(pageRef)
 
-		if pageRef.Tags != nil && (oldTags == nil || !Equal(*oldTags, *pageRef.Tags)) {
+		if pageRef.Data.Tags != nil && (oldTags == nil || !Equal(*oldTags, *pageRef.Data.Tags)) {
 			check(err)
 			pageRefUpdateChan <- pageRef
 		}
