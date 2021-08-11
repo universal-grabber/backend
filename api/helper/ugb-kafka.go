@@ -63,7 +63,7 @@ func (s *UgbKafka) SendPageRef(pageRef *model.PageRef) error {
 }
 
 func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan bool) <-chan *model.PageRef {
-	pageChan := make(chan *model.PageRef)
+	pageChan := make(chan *model.PageRef, 1000)
 
 	r := s.getReader(topic, group)
 
