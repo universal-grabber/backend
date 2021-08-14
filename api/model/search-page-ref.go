@@ -8,4 +8,5 @@ type SearchPageRef struct {
 	Page        int
 	PageSize    int
 	Tags        []string
+	ProcessAll  bool
 }

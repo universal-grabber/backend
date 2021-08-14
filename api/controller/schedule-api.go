@@ -42,9 +42,18 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 	pageChan := make(chan *model.PageRef, 100)
 
+	page := searchPageRef.Page
+
 	// search async
 	go func() {
-		receiver.service.Search(searchPageRef, pageChan, c.Writer.CloseNotify())
+		searchPageRef.Page = 0
+		for {
+			receiver.service.Search(searchPageRef, pageChan, c.Writer.CloseNotify())
+			searchPageRef.Page++
+			if searchPageRef.Page >= page {
+				break
+			}
+		}
 	}()
 
 	count := 0
@@ -57,6 +66,10 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 		timeCalc.Step()
 
 		log.Debug(pageRef)
+
+		if count%1000 == 0 {
+			c.String(200, "processed: ", count)
+		}
 
 		if err != nil {
 			c.Error(err)
