@@ -41,14 +41,13 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	}
 
 	page := searchPageRef.Page
+	searchPageRef.Page = 0
 
 	go func() {
 		interruptChan := make(chan bool)
 		// search async
 		for {
 			pageChan := make(chan *model.PageRef, 100)
-
-			searchPageRef.Page = 0
 			go func() {
 				receiver.service.Search(searchPageRef, pageChan, interruptChan)
 			}()
