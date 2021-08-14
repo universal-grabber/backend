@@ -98,6 +98,7 @@ func (processor *Processor) processItem(i int, pageRef *base.PageRef) {
 	origPageRef := pageRef
 
 	common.PageRefLogger(pageRef, "before-run-process-item").
+		WithField("processIndex", i).
 		Debug("sending item to process")
 
 	pageRef = processor.runProcessItem(pageRef, i)
@@ -115,6 +116,7 @@ func (processor *Processor) processItem(i int, pageRef *base.PageRef) {
 	}
 
 	common.PageRefLogger(pageRef, "after-run-process-item-status-fix").
+		WithField("processIndex", i).
 		Debug("process result for single item")
 
 	processor.ApiClient.UpdatePageRef(pageRef)
