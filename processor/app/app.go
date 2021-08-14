@@ -12,7 +12,7 @@ import (
 )
 
 type App struct {
-	apiClient            *client.ApiClientNew
+	apiClient            *client.ApiClient
 	backendStorageClient *client.BackendStorageClient
 	modelProcessorClient *client.ModelProcessorClient
 	publisherClient      *client.PublisherClient
@@ -67,7 +67,7 @@ func (app *App) Run() {
 }
 
 func (app *App) initClients() {
-	app.apiClient = new(client.ApiClientNew)
+	app.apiClient = new(client.ApiClient)
 	app.backendStorageClient = new(client.BackendStorageClient)
 	app.modelProcessorClient = new(client.ModelProcessorClient)
 	app.publisherClient = new(client.PublisherClient)
@@ -102,7 +102,7 @@ func (app *App) initTasks() {
 	}
 }
 
-func (app *App) GetApiClient() *client.ApiClientNew {
+func (app *App) GetApiClient() *client.ApiClient {
 	return app.apiClient
 }
 func (app *App) GetBackendStorageClient() *client.BackendStorageClient {

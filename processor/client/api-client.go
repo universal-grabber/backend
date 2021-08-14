@@ -1,17 +1,16 @@
 package client
 
 import (
+	"backend/common"
 	"backend/gen/proto/base"
+	pb "backend/gen/proto/service/api"
 	"backend/processor/lib"
 	"backend/processor/model"
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
-	"io"
-	"net/http"
+	"google.golang.org/grpc"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -24,6 +23,9 @@ type ApiClient struct {
 	config      model.Config
 
 	insertSemaphore *semaphore.Weighted
+
+	pageServiceClient pb.PageRefServiceClient
+	connection        *grpc.ClientConn
 }
 
 func (client *ApiClient) Init(config model.Config) {
@@ -32,84 +34,57 @@ func (client *ApiClient) Init(config model.Config) {
 	go client.scheduleUpdateChannel()
 
 	client.insertSemaphore = semaphore.NewWeighted(10000)
+
+	// initialize grpc
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(config.UgbApiGrpcUri, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+
+	client.connection = conn
+
+	client.pageServiceClient = pb.NewPageRefServiceClient(conn)
 }
 
-func (client *ApiClient) AcceptPages(taskName string) chan *base.PageRef {
-	log.Debugf("starting to accept pages for task %s", taskName)
+func (client *ApiClient) AcceptPages(state base.PageRefState) chan *base.PageRef {
+	timeCalc := new(common.TimeCalc)
+	timeCalc.Init("timer1")
+
+	log.Debugf("starting to accept pages for state %s", state)
+
+	req := new(pb.PageRefFetchRequest)
+	req.State = state
+	req.Websites = client.config.EnabledWebsites
+
 	pageRefReadChannel := make(chan *base.PageRef)
 
 	go func() {
-		var round uint64
 		for {
-			round++
-			log.Tracef("starting to accept pages for task %s for round %d", taskName, round)
+			resp, err := client.pageServiceClient.Fetch(context.TODO(), req)
 
-			client.requestPageRefs(taskName, pageRefReadChannel)
+			if err != nil {
+				log.Warn(err)
+				time.Sleep(1 * time.Second)
+				continue
+			}
 
-			log.Tracef("finished to accept pages for task %s for round %d", taskName, round)
+			for {
+				item, err := resp.Recv()
+
+				if err != nil {
+					break
+				}
+
+				timeCalc.Step()
+				pageRefReadChannel <- item
+			}
+
+			time.Sleep(1 * time.Second)
 		}
 	}()
 
 	return pageRefReadChannel
-}
-
-func (client *ApiClient) requestPageRefs(taskName string, pageRefChan chan *base.PageRef) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Errorf("panicing while request page refs for task: %s / %s", taskName, r)
-		}
-	}()
-
-	url := client.config.UgbApiUri + "/api/1.0/page-refs/update-state?pageSize=100&fairSearch=true&state=" + taskName + "&status=PENDING&toState=" + taskName + "&toStatus=EXECUTING"
-
-	if client.config.EnabledWebsites != nil {
-		url = client.config.UgbApiUri + "/api/1.0/page-refs/update-state?pageSize=100&websiteName=" + client.config.EnabledWebsites[0] + "&state=" + taskName + "&status=PENDING&toState=" + taskName + "&toStatus=EXECUTING"
-	}
-
-	resp, err := http.Post(url, "application/text", nil)
-
-	lib.Check(err)
-
-	defer resp.Body.Close()
-
-	reader := bufio.NewReader(resp.Body)
-
-	client.read(reader, pageRefChan)
-}
-
-func (client *ApiClient) read(reader *bufio.Reader, pageRefChan chan *base.PageRef) {
-	counter := 0
-	for {
-		line, _, err := reader.ReadLine()
-		str := string(line)
-
-		if err == io.EOF {
-			break
-		}
-
-		if len(str) <= 1 {
-			continue
-		}
-
-		if str[len(str)-1] == ',' {
-			str = str[0 : len(str)-1]
-			line = line[0 : len(line)-1]
-		}
-
-		pageRef := new(base.PageRef)
-
-		err = json.Unmarshal(line, &pageRef)
-
-		lib.Check(err)
-
-		counter++
-		pageRefChan <- pageRef
-	}
-
-	// wait for 1 seconds if no task received
-	if counter == 0 {
-		time.Sleep(1 * time.Second)
-	}
 }
 
 func (client *ApiClient) InsertPageRef(ref *base.PageRef) {
@@ -165,25 +140,18 @@ func (client *ApiClient) bulkUpdate(buffer []*base.PageRef) {
 			log.Printf("panicing update: %s", r)
 		}
 	}()
-	//log.Printf("starting update flush %d items", len(buffer))
-	body, err := json.Marshal(buffer)
 
-	if err != nil {
-		log.Panic(err)
-	}
+	log.Info("updating pageRefs (" + strconv.Itoa(len(buffer)) + ")")
 
-	req, err := http.NewRequest("PATCH", client.config.UgbApiUri+"/api/1.0/page-refs/bulk", bytes.NewReader(body))
+	req := new(pb.PageRefList)
 
-	if err != nil {
-		log.Panic(err)
-	}
+	req.List = buffer
 
-	_, err = http.DefaultClient.Do(req)
+	_, err := client.pageServiceClient.Complete(context.TODO(), req)
 
-	if err != nil {
-		log.Panic(err)
-	}
-	//log.Printf("finished update flush %d items", len(buffer))
+	log.Info("updating pageRefs done (" + strconv.Itoa(len(buffer)) + ")")
+
+	lib.Check(err)
 }
 
 func (client *ApiClient) bulkInsert(buffer []*base.PageRef) {
@@ -193,23 +161,15 @@ func (client *ApiClient) bulkInsert(buffer []*base.PageRef) {
 		}
 	}()
 
-	//log.Printf("starting insert flush %d items", len(buffer))
-	body, err := json.Marshal(buffer)
+	log.Info("inserting pageRefs (" + strconv.Itoa(len(buffer)) + ")")
 
-	if err != nil {
-		log.Panic(err)
-	}
+	req := new(pb.PageRefList)
 
-	req, err := http.NewRequest("POST", client.config.UgbApiUri+"/api/1.0/page-refs/bulk", bytes.NewReader(body))
+	req.List = buffer
 
-	if err != nil {
-		log.Panic(err)
-	}
+	_, err := client.pageServiceClient.Create(context.TODO(), req)
 
-	_, err = http.DefaultClient.Do(req)
+	log.Info("inserting pageRefs end (" + strconv.Itoa(len(buffer)) + ")")
 
-	if err != nil {
-		log.Panic(err)
-	}
-	//log.Printf("finished insert flush %d items", len(buffer))
+	lib.Check(err)
 }
