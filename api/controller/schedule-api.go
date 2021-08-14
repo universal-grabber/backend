@@ -31,7 +31,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	timeCalc := new(helper.TimeCalc)
 	timeCalc.Init("ScheduleKafka")
 
-	//kafka := helper.UgbKafkaInstance
+	kafka := helper.UgbKafkaInstance
 
 	searchPageRef := new(model.SearchPageRef)
 	err := helper.ParseRequestQuery(c.Request, searchPageRef)
@@ -52,16 +52,16 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	for pageRef := range pageChan {
 		count++
 
-		//err := kafka.SendPageRef(pageRef)
+		err := kafka.SendPageRef(pageRef)
 
 		timeCalc.Step()
 
 		log.Debug(pageRef)
 
-		//if err != nil {
-		//	c.Error(err)
-		//	return
-		//}
+		if err != nil {
+			c.Error(err)
+			return
+		}
 	}
 
 	c.String(200, "OK: "+strconv.Itoa(count))

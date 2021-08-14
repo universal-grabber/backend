@@ -104,17 +104,17 @@ func (app *App) read(pageRef *base.PageRef, require bool) (*pb.StoreResult, erro
 
 	exists := rec != nil
 
-	if len(rec) < 10000 {
-		exists = false
-
-		common.PageRefLogger(pageRef, "delete-page-ref").Debugf("deleting")
-		ok, err := storage.Delete(toUUID(pageRef.Id))
-		common.PageRefLogger(pageRef, "delete-page-ref").Debugf("delete finished: %v", ok)
-
-		if err != nil {
-			return nil, err
-		}
-	}
+	//if len(rec) < 10000 {
+	//	exists = false
+	//
+	//	common.PageRefLogger(pageRef, "delete-page-ref").Debugf("deleting")
+	//	ok, err := storage.Delete(toUUID(pageRef.Id))
+	//	common.PageRefLogger(pageRef, "delete-page-ref").Debugf("delete finished: %v", ok)
+	//
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	needsDownload := forceDownload || (!exists && (!lazyDownload || require))
 
@@ -197,27 +197,27 @@ func toUUID(id string) uuid.UUID {
 }
 
 func checkStoreResult(result *pb.StoreResult, pageRef *base.PageRef) {
-	if result.Size < 10000 {
-		if strings.Contains(result.Content, "DDoS protection") {
-			log.Warn("cloudflare protection: " + pageRef.Url)
-			result.State = pb.State_CLOUDFLARE_DDOS_PROTECTION
-		}
-
-		if len(result.Content) > 0 {
-			log.Warnf("low content size %s SIZE : %d", pageRef.Url, len(result.Content))
-			log.Debugf("low content size %s CONTENT : %s", pageRef.Url, result.Content)
-			result.State = pb.State_LOW_CONTENT_SIZE
-		} else if len(result.Content) == 0 {
-			log.Warnf("no content for %s", pageRef.Url) // try again
-			result.State = pb.State_NO_CONTENT
-		}
-
-		result.Ok = false
-	} else {
-		result.Ok = true
-		result.State = pb.State_DOWNLOADED
-		log.Debugf("page-ref downloaded %s", pageRef.Url)
-	}
+	//if result.Size < 10000 {
+	//	if strings.Contains(result.Content, "DDoS protection") {
+	//		log.Warn("cloudflare protection: " + pageRef.Url)
+	//		result.State = pb.State_CLOUDFLARE_DDOS_PROTECTION
+	//	}
+	//
+	//	if len(result.Content) > 0 {
+	//		log.Warnf("low content size %s SIZE : %d", pageRef.Url, len(result.Content))
+	//		log.Debugf("low content size %s CONTENT : %s", pageRef.Url, result.Content)
+	//		result.State = pb.State_LOW_CONTENT_SIZE
+	//	} else if len(result.Content) == 0 {
+	//		log.Warnf("no content for %s", pageRef.Url) // try again
+	//		result.State = pb.State_NO_CONTENT
+	//	}
+	//
+	//	result.Ok = false
+	//} else {
+	result.Ok = true
+	result.State = pb.State_DOWNLOADED
+	log.Debugf("page-ref downloaded %s", pageRef.Url)
+	//}
 }
 
 func (app *App) download(url string) []byte {
