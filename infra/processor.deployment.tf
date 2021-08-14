@@ -38,12 +38,12 @@ resource "kubernetes_deployment" "ugb-processor" {
 
           env {
             name = "BACKEND_API"
-            value = "http://ugb-api"
+            value = "http://kube.tisserv.net:30003"
           }
 
           env {
             name = "BACKEND_GRPC_API"
-            value = "ugb-api:6565"
+            value = "kube.tisserv.net:30004"
           }
 
           env {
