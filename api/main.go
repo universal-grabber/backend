@@ -11,13 +11,14 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
 	_ "net/http/pprof"
 )
 
 func main() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetReportCaller(true)
+	//log.SetFormatter(&log.JSONFormatter{})
+	//log.SetReportCaller(true)
 	log.SetLevel(log.TraceLevel)
 
 	fmt.Print("Started\n")
@@ -58,6 +59,8 @@ func runGrpc() {
 	s := grpc.NewServer()
 
 	pb.RegisterPageRefServiceServer(s, pageRefGrpcService)
+
+	reflection.Register(s)
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

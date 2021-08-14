@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"sync"
+	"time"
 )
 
 type PageRefKafkaService struct {
@@ -43,7 +44,7 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 		wg := new(sync.WaitGroup)
 
 		for _, topic := range topics {
-			if !strings.Contains(topic, topic) {
+			if !strings.Contains(topic, state.String()) {
 				log.Print("topic {} ignored for state {}", topic, state)
 				continue
 			}
@@ -59,9 +60,22 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 
 			topic := topic
 			go func() {
-				for pageRef := range localPageChan {
-					pageChan <- pageRef
-
+			MainLoop:
+				for {
+					select {
+					case pageRef, ok := <-localPageChan:
+						if !ok {
+							interruptChan <- false
+							log.Print("localPageChan not ok: {}", topic)
+							break MainLoop
+						}
+						pageChan <- pageRef
+						log.Print("accepted item: {}", pageRef)
+					case <-time.After(3 * time.Second):
+						interruptChan <- false
+						log.Print("timeout on topic: {}", topic)
+						break MainLoop
+					}
 					counter++
 
 					if counter == 10000 {
