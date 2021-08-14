@@ -5,6 +5,7 @@ import (
 	"backend/api/model"
 	"backend/gen/proto/base"
 	pb "backend/gen/proto/service/api"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"sync"
@@ -60,6 +61,12 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 
 			topic := topic
 			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						fmt.Printf("Panic: %+v\n", r)
+					}
+				}()
+
 			MainLoop:
 				for {
 					select {
