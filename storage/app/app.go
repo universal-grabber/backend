@@ -221,7 +221,7 @@ func checkStoreResult(result *pb.StoreResult, pageRef *base.PageRef) {
 }
 
 func (app *App) download(url string) []byte {
-	downloadUrl := "https://tisserv.net:8234/get-clean?url=" + url
+	downloadUrl := "https://ug.tisserv.net:8234/get-clean?url=" + url
 	log.Print("Download task: ", downloadUrl)
 	resp, err := app.downloaderClient.Get(downloadUrl)
 
