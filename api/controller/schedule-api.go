@@ -42,38 +42,40 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 	page := searchPageRef.Page
 
-	// search async
-	for {
-		pageChan := make(chan *model.PageRef, 100)
+	go func() {
+		interruptChan := make(chan bool)
+		// search async
+		for {
+			pageChan := make(chan *model.PageRef, 100)
 
-		searchPageRef.Page = 0
-		go func() {
-			receiver.service.Search(searchPageRef, pageChan, c.Writer.CloseNotify())
-		}()
+			searchPageRef.Page = 0
+			go func() {
+				receiver.service.Search(searchPageRef, pageChan, interruptChan)
+			}()
 
-		count := 0
+			count := 0
 
-		for pageRef := range pageChan {
-			count++
+			for pageRef := range pageChan {
+				count++
 
-			err := kafka.SendPageRef(pageRef)
+				err := kafka.SendPageRef(pageRef)
 
-			timeCalc.Step()
+				timeCalc.Step()
 
-			log.Debug(pageRef)
+				if err != nil {
+					log.Error(err)
+					return
+				}
+			}
+			log.Print(200, "SCHEDULED: "+strconv.Itoa(count))
 
-			if err != nil {
-				c.Error(err)
-				return
+			searchPageRef.Page++
+			if searchPageRef.Page >= page {
+				interruptChan <- true
+				break
 			}
 		}
-		c.String(200, "OK: "+strconv.Itoa(count))
-
-		searchPageRef.Page++
-		if searchPageRef.Page >= page {
-			break
-		}
-	}
+	}()
 
 }
 
