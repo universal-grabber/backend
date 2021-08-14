@@ -11,7 +11,7 @@ import (
 func main() {
 	// initialize grpc
 	// Set up a connection to the server.
-	conn, err := grpc.Dial("localhost:6565", grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial("kube.tisserv.net:30004", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
