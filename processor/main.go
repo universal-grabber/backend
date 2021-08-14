@@ -10,7 +10,7 @@ import (
 
 func main() {
 	//log.SetFormatter(&log.JSONFormatter{})
-	//log.SetReportCaller(true)
+	log.SetReportCaller(true)
 	log.SetLevel(log.TraceLevel)
 
 	app := new(appPackage.App)
