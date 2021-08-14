@@ -72,6 +72,7 @@ func registerContext() {
 	scheduleApi := new(controller.ScheduleApiImpl)
 
 	pageRefApi.Init()
+	scheduleApi.Init()
 
 	context.Register(context.WebsiteApiInstance, websiteApi)
 	context.Register(context.PageRefApiInstance, pageRefApi)

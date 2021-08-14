@@ -29,6 +29,33 @@ func (s *UgbKafka) getReader(topic string, group string) *kafka.Reader {
 	})
 }
 
+func (s *UgbKafka) ListTopics() []string {
+	conn, err := kafka.Dial("tcp", kafkaHost)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer conn.Close()
+
+	partitions, err := conn.ReadPartitions()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	m := map[string]struct{}{}
+
+	for _, p := range partitions {
+		m[p.Topic] = struct{}{}
+	}
+
+	var list []string
+
+	for k := range m {
+		list = append(list, k)
+	}
+
+	return list
+}
+
 func (s *UgbKafka) GetWriter(topic string) *kafka.Writer {
 	if s.writerMap == nil {
 		s.writerMap = make(map[string]*kafka.Writer)

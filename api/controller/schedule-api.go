@@ -2,16 +2,94 @@ package controller
 
 import (
 	context2 "backend/api/context"
+	"backend/api/helper"
+	"backend/api/model"
+	"backend/api/service"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+	"strconv"
 )
 
 type ScheduleApiImpl struct {
+	service *service.PageRefService
+}
+
+func (receiver *ScheduleApiImpl) Init() {
+	receiver.service = new(service.PageRefService)
 }
 
 func (receiver *ScheduleApiImpl) RegisterRoutes(r *gin.Engine) {
 	r.GET("/api/1.0/schedule/apply-tags", receiver.applyTags)
 	r.GET("/api/1.0/schedule/website", receiver.manualScheduleWebsite)
 	r.GET("/api/1.0/schedule/reload", receiver.reload)
+
+	r.GET("/api/1.0/page-refs/schedule-kafka", receiver.ScheduleKafka)
+	r.GET("/api/1.0/page-refs/read-kafka", receiver.ReadKafka)
+}
+
+func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
+	timeCalc := new(helper.TimeCalc)
+	timeCalc.Init("ScheduleKafka")
+
+	//kafka := helper.UgbKafkaInstance
+
+	searchPageRef := new(model.SearchPageRef)
+	err := helper.ParseRequestQuery(c.Request, searchPageRef)
+
+	if err != nil {
+		panic(err)
+	}
+
+	pageChan := make(chan *model.PageRef, 100)
+
+	// search async
+	go func() {
+		receiver.service.Search(searchPageRef, pageChan, c.Writer.CloseNotify())
+	}()
+
+	count := 0
+
+	for pageRef := range pageChan {
+		count++
+
+		//err := kafka.SendPageRef(pageRef)
+
+		timeCalc.Step()
+
+		log.Debug(pageRef)
+
+		//if err != nil {
+		//	c.Error(err)
+		//	return
+		//}
+	}
+
+	c.String(200, "OK: "+strconv.Itoa(count))
+}
+
+func (receiver *ScheduleApiImpl) ReadKafka(c *gin.Context) {
+	timeCalc := new(helper.TimeCalc)
+	timeCalc.Init("ScheduleKafka")
+
+	kafka := helper.UgbKafkaInstance
+
+	topic := c.Request.URL.Query().Get("topic")
+	group := c.Request.URL.Query().Get("group")
+
+	pageChan := kafka.RecvPageRef(topic, group, c.Writer.CloseNotify())
+
+	c.String(200, "[\n")
+	isFirst := true
+	for pageRef := range pageChan {
+		if !isFirst {
+			c.String(200, ",\n")
+		}
+		isFirst = false
+
+		c.JSON(200, pageRef)
+	}
+
+	c.String(200, "\n]")
 }
 
 func (receiver *ScheduleApiImpl) applyTags(context *gin.Context) {

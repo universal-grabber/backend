@@ -5,8 +5,8 @@ import (
 	context2 "backend/api/context"
 	"backend/api/helper"
 	"backend/api/model"
+	"backend/api/util"
 	"context"
-	"fmt"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -34,17 +34,17 @@ func (service *PageRefService) Search(searchPageRef *model.SearchPageRef, pageCh
 	}
 
 	if !searchPageRef.FairSearch {
-		websitePageChan := searchByFilter(db, prepareFilter(searchPageRef), interruptChan, opts)
-		redirectChan(pageChan, websitePageChan)
+		websitePageChan := util.SearchByFilter(db, util.PrepareFilter(searchPageRef), interruptChan, opts)
+		util.RedirectChan(pageChan, websitePageChan)
 	} else {
-		websites := listWebsites(db)
+		websites := util.ListWebsites(db)
 
 		var chanArr []chan *model.PageRef
 		for _, website := range websites {
 
-			filters := prepareFilter(searchPageRef)
+			filters := util.PrepareFilter(searchPageRef)
 			filters["websiteName"] = website.Name
-			chanArr = append(chanArr, searchByFilter(db, filters, interruptChan, opts))
+			chanArr = append(chanArr, util.SearchByFilter(db, filters, interruptChan, opts))
 		}
 
 		isFound := true
@@ -69,110 +69,6 @@ func (service *PageRefService) Search(searchPageRef *model.SearchPageRef, pageCh
 	}
 
 	close(pageChan)
-}
-
-func redirectChan(to chan *model.PageRef, from chan *model.PageRef) {
-	for item := range from {
-		to <- item
-	}
-}
-
-func prepareFilter(searchPageRef *model.SearchPageRef) bson.M {
-	filters := bson.M{}
-
-	if !searchPageRef.FairSearch && len(searchPageRef.WebsiteName) > 0 {
-		filters["websiteName"] = searchPageRef.WebsiteName
-	}
-
-	if len(searchPageRef.State) > 0 {
-		filters["state"] = searchPageRef.State
-	}
-
-	if len(searchPageRef.Status) > 0 {
-		filters["status"] = searchPageRef.Status
-	}
-
-	if len(searchPageRef.Tags) > 0 {
-		filters["tags"] = bson.M{"$in": searchPageRef.Tags}
-	}
-	return filters
-}
-
-func listWebsites(db *helper.UgbMongo) []model.WebSite {
-	websitesCursor, err := db.GetCollection(_const.UgbMongoDb, "website").Find(context.Background(), bson.M{})
-
-	if err != nil {
-		log.Panic(err)
-	}
-
-	var list []model.WebSite
-
-	for websitesCursor.Next(context.Background()) {
-		website := new(model.WebSite)
-
-		err = websitesCursor.Decode(website)
-
-		if err != nil {
-			log.Panic(err)
-		}
-
-		list = append(list, *website)
-	}
-
-	err = websitesCursor.Close(context.TODO())
-
-	if err != nil {
-		log.Panic(err)
-	}
-	return list
-}
-
-func searchByFilter(db *helper.UgbMongo, filters bson.M, interruptChan <-chan bool, opts *options.FindOptions) chan *model.PageRef {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("panicing searchByFilter: %s", r)
-		}
-	}()
-
-	pageChan := make(chan *model.PageRef)
-
-	go func() {
-		defer func() {
-			close(pageChan)
-		}()
-
-		cursor, err := db.GetCollection(_const.UgbMongoDb, "pageRef").Find(context.Background(), filters, opts)
-
-		if err != nil {
-			panic(err)
-		}
-
-		for cursor.Next(context.Background()) {
-			select {
-			case <-interruptChan:
-				fmt.Print("Stopping receiving items as client disconnected\n")
-				return
-			default:
-			}
-			pageRef := new(model.PageRef)
-
-			err := bson.UnmarshalWithRegistry(helper.MongoRegistry, cursor.Current, pageRef)
-
-			if err != nil {
-				break
-			}
-
-			pageChan <- pageRef
-		}
-
-		err = cursor.Close(context.TODO())
-
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	return pageChan
 }
 
 func (service *PageRefService) asyncUpdateRecords(updateChan chan *model.PageRef, toState string, toStatus string, timeCalc *helper.TimeCalc) {
@@ -249,16 +145,7 @@ func (service *PageRefService) UpdateStatesBulk2(searchPageRef *model.SearchPage
 	return pageChan, updateChan
 }
 
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
-func (service *PageRefService) PageRefExistsMultiViaUrl(urls []string) []string {
+func (service *PageRefService) pageRefExistsMultiViaUrl(urls []string) []string {
 	opts := new(options.FindOptions)
 	opts.Projection = bson.D{{"url", 1}}
 
@@ -320,7 +207,7 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) {
 
 		oldId := pageRef.Id
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
-		if contains(*pageRef.Data.Tags, "delete") {
+		if util.Contains(*pageRef.Data.Tags, "delete") {
 			// delete dangling page-ref
 			writeModel := mongo.NewDeleteOneModel()
 			writeModel.Filter = bson.M{"_id": oldId}
@@ -372,12 +259,12 @@ func (service *PageRefService) BulkInsert(list []model.PageRef) {
 		helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref")
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
 
-		if contains(*pageRef.Data.Tags, "delete") {
+		if util.Contains(*pageRef.Data.Tags, "delete") {
 			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by delete tag")
 			continue
 		}
 
-		if !contains(*pageRef.Data.Tags, "allow-import") {
+		if !util.Contains(*pageRef.Data.Tags, "allow-import") {
 			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by allow import tag")
 			continue
 		}
@@ -393,10 +280,10 @@ func (service *PageRefService) BulkInsert(list []model.PageRef) {
 		insertUrls = append(insertUrls, pageRef.Data.Url)
 	}
 
-	existingUrls := service.PageRefExistsMultiViaUrl(insertUrls)
+	existingUrls := service.pageRefExistsMultiViaUrl(insertUrls)
 
 	for _, pageRef := range insertList {
-		if contains(existingUrls, pageRef.Data.Url) {
+		if util.Contains(existingUrls, pageRef.Data.Url) {
 			continue
 		}
 		writeModel := mongo.NewInsertOneModel()

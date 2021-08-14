@@ -7,32 +7,25 @@ import "base/empty.proto";
 
 option go_package = "backend/gen/proto/service/api";
 
-message PageRefServiceUpdateRequest {
-  int32 bufferSize                = 1;
-  bool fairSearch                 = 2;
+message PageRefSearchRequest {
+  repeated string        websiteName = 1;
+  repeated PageRefState  state       = 2;
+  repeated PageRefStatus status      = 3;
+  repeated string        tags        = 4;
 
-  PageRefState state              = 3;
-  PageRefStatus status            = 4;
-
-  PageRefState toState            = 5;
-  PageRefStatus toStatus          = 6;
-
-  repeated string enabledWebsites = 7;
+  int32                  pageSize    = 5;
+  int32                  page        = 6;
 }
 
-message PageRefSearchRequest {
-  repeated string websiteName   = 1;
-  repeated PageRefState state   = 2;
-  repeated PageRefStatus status = 3;
-  repeated string tags          = 4;
-
-  int32 pageSize                = 5;
-  int32 page                    = 6;
+message PageRefFetchRequest {
+  int32           bufferSize = 1;
+  PageRefState    state      = 2;
+  repeated string websites   = 3;
 }
 
 message PageRefSearchResult {
-  repeated PageRef data = 1;
-  int32 totalSize       = 2;
+  repeated PageRef data      = 1;
+  int32            totalSize = 2;
 }
 
 message PageRefList {
@@ -42,9 +35,9 @@ message PageRefList {
 service PageRefService {
   rpc search (PageRefSearchRequest) returns (PageRefSearchResult);
 
-  rpc updateAndAccept (PageRefServiceUpdateRequest) returns (stream PageRef);
+  rpc fetch (PageRefFetchRequest) returns (stream PageRef);
 
-  rpc update (PageRefList) returns (Empty);
+  rpc complete (PageRefList) returns (Empty);
 
   rpc create (PageRefList) returns (Empty);
 }

@@ -1,11 +1,9 @@
 package grpc_impl
 
 import (
-	"backend/api/helper"
 	"backend/api/model"
 	"backend/api/service"
 	"backend/common"
-	commonModel "backend/common/model"
 	"backend/gen/proto/base"
 	pb "backend/gen/proto/service/api"
 	"context"
@@ -16,78 +14,46 @@ import (
 type PageRefGrpcService struct {
 	pb.UnimplementedPageRefServiceServer
 
-	service *service.PageRefService
+	service *service.PageRefKafkaService
 }
 
 func (receiver *PageRefGrpcService) Init() {
-	receiver.service = new(service.PageRefService)
+	receiver.service = new(service.PageRefKafkaService)
 }
 
-func (receiver PageRefGrpcService) UpdateAndAccept(req *pb.PageRefServiceUpdateRequest, res pb.PageRefService_UpdateAndAcceptServer) error {
-	log.Print("requested UpdateAndAccept for " + req.String())
-	timeCalc := new(helper.TimeCalc)
-	timeCalc.Init("pageRefApiList")
+func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.PageRefService_FetchServer) error {
+	interruptChan := make(chan bool)
 
-	if len(req.GetToState().String()) == 0 {
-		return commonModel.NewException("toState is missing")
-	}
+	pageChan := receiver.service.Fetch(req.State, req.Websites, req, interruptChan)
 
-	if len(req.GetToStatus().String()) == 0 {
-		return commonModel.NewException("toStatus is missing")
-	}
-
-	searchPageRef := new(model.SearchPageRef)
-
-	searchPageRef.FairSearch = req.FairSearch
-	searchPageRef.PageSize = 1000
-	searchPageRef.State = req.State.String()
-	searchPageRef.Status = req.Status.String()
-	if req.EnabledWebsites != nil && len(req.EnabledWebsites) > 0 {
-		searchPageRef.WebsiteName = req.EnabledWebsites[0]
-	}
-	// implement logic for websites and tags
-
-	var closeChan = make(chan bool)
-
-	go func() {
-		<-res.Context().Done()
-		closeChan <- true
-	}()
-
-	pageChan, updateChan := receiver.service.UpdateStatesBulk2(searchPageRef, req.GetToState().String(), req.GetToStatus().String(), closeChan)
-
-	defer close(updateChan)
-
-	for pageRef := range pageChan {
-		helper.PageRefLogger(pageRef, "request-update-state").Debug("pageRef state updated")
-
-		err := res.Send(convertPageRef(pageRef))
-
+	for record := range pageChan {
+		err := res.Send(convertPageRef(record))
 		if err != nil {
-			log.Warn(err)
-			break
-		}
+			log.Error(err)
 
-		updateChan <- pageRef
+			interruptChan <- false
+
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (receiver PageRefGrpcService) Update(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
-	var items []model.PageRef
+func (receiver PageRefGrpcService) Complete(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
+	var items []*model.PageRef
 
 	for _, record := range req.List {
 		items = append(items, convertBasePageRef(record))
 	}
 
-	receiver.service.BulkWrite2(items)
+	receiver.service.Complete(items)
 
 	return nil, nil
 }
 
 func (receiver PageRefGrpcService) Create(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
-	var items []model.PageRef
+	var items []*model.PageRef
 
 	for _, record := range req.List {
 		items = append(items, convertBasePageRef(record))
@@ -115,12 +81,12 @@ func convertPageRef(ref *model.PageRef) *base.PageRef {
 	}
 }
 
-func convertBasePageRef(record *base.PageRef) model.PageRef {
+func convertBasePageRef(record *base.PageRef) *model.PageRef {
 	id, err := uuid.FromString(record.Id)
 
 	common.Check(err)
 
-	return model.PageRef{
+	return &model.PageRef{
 		Id: id,
 		Data: model.PageRefData{
 			Source: record.WebsiteName,

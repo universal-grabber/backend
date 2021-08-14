@@ -5,8 +5,6 @@ import (
 	"backend/api/model"
 	"backend/api/service"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 type PageRefApiImpl struct {
@@ -19,13 +17,7 @@ func (receiver *PageRefApiImpl) Init() {
 
 func (receiver *PageRefApiImpl) RegisterRoutes(r *gin.Engine) {
 	r.GET("/api/1.0/page-refs", receiver.List)
-	r.GET("/api/1.0/page-refs/schedule-kafka", receiver.ScheduleKafka)
-	r.GET("/api/1.0/page-refs/read-kafka", receiver.ReadKafka)
 	r.GET("/api/1.0/page-refs/urls", receiver.ListUrls)
-	r.PATCH("/api/1.0/page-refs/bulk", receiver.BulkUpsert)
-	r.POST("/api/1.0/page-refs/bulk", receiver.BulkInsert)
-	r.POST("/api/1.0/page-refs/update-state", receiver.UpdateStatesBulk)
-	r.PUT("/api/1.0/page-refs/update-state", receiver.UpdateStatesBulk)
 }
 
 func (receiver *PageRefApiImpl) List(c *gin.Context) {
@@ -45,71 +37,6 @@ func (receiver *PageRefApiImpl) List(c *gin.Context) {
 	go func() {
 		receiver.service.Search(searchPageRef, pageChan, c.Writer.CloseNotify())
 	}()
-
-	c.String(200, "[\n")
-	isFirst := true
-	for pageRef := range pageChan {
-		if !isFirst {
-			c.String(200, ",\n")
-		}
-		isFirst = false
-
-		c.JSON(200, pageRef)
-	}
-
-	c.String(200, "\n]")
-}
-
-func (receiver *PageRefApiImpl) ScheduleKafka(c *gin.Context) {
-	timeCalc := new(helper.TimeCalc)
-	timeCalc.Init("ScheduleKafka")
-
-	//kafka := helper.UgbKafkaInstance
-
-	searchPageRef := new(model.SearchPageRef)
-	err := helper.ParseRequestQuery(c.Request, searchPageRef)
-
-	if err != nil {
-		panic(err)
-	}
-
-	pageChan := make(chan *model.PageRef, 100)
-
-	// search async
-	go func() {
-		receiver.service.Search(searchPageRef, pageChan, c.Writer.CloseNotify())
-	}()
-
-	count := 0
-
-	for pageRef := range pageChan {
-		count++
-
-		//err := kafka.SendPageRef(pageRef)
-
-		timeCalc.Step()
-
-		log.Debug(pageRef)
-
-		//if err != nil {
-		//	c.Error(err)
-		//	return
-		//}
-	}
-
-	c.String(200, "OK: "+strconv.Itoa(count))
-}
-
-func (receiver *PageRefApiImpl) ReadKafka(c *gin.Context) {
-	timeCalc := new(helper.TimeCalc)
-	timeCalc.Init("ScheduleKafka")
-
-	kafka := helper.UgbKafkaInstance
-
-	topic := c.Request.URL.Query().Get("topic")
-	group := c.Request.URL.Query().Get("group")
-
-	pageChan := kafka.RecvPageRef(topic, group, c.Writer.CloseNotify())
 
 	c.String(200, "[\n")
 	isFirst := true

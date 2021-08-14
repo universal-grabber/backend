@@ -4,6 +4,7 @@ import (
 	"backend/api/const"
 	"backend/api/helper"
 	"backend/api/model"
+	"backend/api/util"
 	"context"
 	"github.com/robfig/cron"
 	uuid "github.com/satori/go.uuid"
@@ -134,13 +135,13 @@ func (s *SchedulerServiceImpl) ConfigurePageRef(pageRef *model.PageRef) {
 
 func (s *SchedulerServiceImpl) ConfigureNextTask(ref *model.PageRef) {
 	oldState := ref.Data.State
-	if contains(*ref.Data.Tags, "deep-scan") && ref.Data.State == "DOWNLOAD" {
+	if util.Contains(*ref.Data.Tags, "deep-scan") && ref.Data.State == "DOWNLOAD" {
 		ref.Data.State = "DEEP_SCAN"
 		ref.Data.Status = "PENDING"
-	} else if contains(*ref.Data.Tags, "allow-parse") && ref.Data.State == "DOWNLOAD" {
+	} else if util.Contains(*ref.Data.Tags, "allow-parse") && ref.Data.State == "DOWNLOAD" {
 		ref.Data.State = "PARSE"
 		ref.Data.Status = "PENDING"
-	} else if contains(*ref.Data.Tags, "allow-parse") && ref.Data.State == "DEEP_SCAN" {
+	} else if util.Contains(*ref.Data.Tags, "allow-parse") && ref.Data.State == "DEEP_SCAN" {
 		ref.Data.State = "PARSE"
 		ref.Data.Status = "PENDING"
 	} else if ref.Data.State == "PARSE" {
