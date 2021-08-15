@@ -72,21 +72,21 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 					select {
 					case pageRef, ok := <-localPageChan:
 						if !ok {
-							interruptChan <- false
+							localInterruptChan <- false
 							log.Print("localPageChan not ok: {}", topic)
 							break MainLoop
 						}
+						counter++
 						pageChan <- pageRef
 						//log.Print("accepted item: {}", pageRef)
 					case <-time.After(3 * time.Second):
-						interruptChan <- false
+						localInterruptChan <- false
 						log.Print("timeout on topic: {}", topic)
 						break MainLoop
 					}
-					counter++
 
 					if counter == 10000 {
-						interruptChan <- false
+						localInterruptChan <- false
 						log.Debug("interrupt signal sent after max counter reached")
 					}
 				}
