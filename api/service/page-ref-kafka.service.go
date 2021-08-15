@@ -106,8 +106,8 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 	}()
 
 	go func() {
-		log.WithField("requestId", requestId).Debug("interrupt signal received")
 		<-interruptChan
+		log.WithField("requestId", requestId).Debug("interrupt signal received")
 
 		for _, interrupt := range interruptions {
 			interrupt <- true
