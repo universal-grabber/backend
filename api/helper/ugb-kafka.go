@@ -25,7 +25,7 @@ func (s *UgbKafka) getReader(topic string, group string) *kafka.Reader {
 		Topic:    topic,
 		GroupID:  group,
 		MinBytes: 10e3, // 10KB
-		MaxBytes: 10e6, // 10MB,
+		MaxBytes: 10e6, // 10MB
 	})
 }
 
@@ -93,6 +93,8 @@ func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan 
 	pageChan := make(chan *model.PageRef, 1000)
 
 	r := s.getReader(topic, group)
+
+	log.Info("staring receive kafka items with lag/offset ", r.Lag(), r.Offset())
 
 	go func() {
 		defer func() {
