@@ -74,12 +74,12 @@ func (app *App) initClients() {
 
 	log.Debug("initializing api client")
 	app.apiClient.Init(app.GetConfig())
-	log.Debug("initializing backend storage")
-	app.backendStorageClient.Init(app.GetConfig())
-	log.Debug("initializing model processor")
-	app.modelProcessorClient.Init(app.GetConfig())
-	log.Debug("initializing publisher")
-	app.publisherClient.Init(app.GetConfig())
+	//log.Debug("initializing backend storage")
+	//app.backendStorageClient.Init(app.GetConfig())
+	//log.Debug("initializing model processor")
+	//app.modelProcessorClient.Init(app.GetConfig())
+	//log.Debug("initializing publisher")
+	//app.publisherClient.Init(app.GetConfig())
 }
 
 func (app *App) initTasks() {

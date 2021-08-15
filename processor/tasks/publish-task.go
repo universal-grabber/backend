@@ -43,22 +43,22 @@ func (task *PublishTask) Init(clients client.Clients) {
 	clientOptions := options.Client().ApplyURI(clients.GetConfig().ParseMongoUri)
 	clientOptions.Registry = lib.MongoRegistry
 
-	// Connect to MongoDB
-	var err error
-	task.mongoClient, err = mongo.Connect(context.TODO(), clientOptions)
-
-	lib.Check(err)
-
-	if err != nil {
-		log.Panic(err)
-	}
-
-	// Check the connection
-	err = task.mongoClient.Ping(context.TODO(), nil)
-
-	task.pageDataCol = task.mongoClient.Database("ug").Collection("pageData")
-
-	lib.Check(err)
+	//// Connect to MongoDB
+	//var err error
+	//task.mongoClient, err = mongo.Connect(context.TODO(), clientOptions)
+	//
+	//lib.Check(err)
+	//
+	//if err != nil {
+	//	log.Panic(err)
+	//}
+	//
+	//// Check the connection
+	//err = task.mongoClient.Ping(context.TODO(), nil)
+	//
+	//task.pageDataCol = task.mongoClient.Database("ug").Collection("pageData")
+	//
+	//lib.Check(err)
 }
 
 func (task *PublishTask) Run() {

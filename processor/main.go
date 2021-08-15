@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/common"
 	appPackage "backend/processor/app"
 	"backend/processor/model"
 	log "github.com/sirupsen/logrus"
@@ -9,9 +10,7 @@ import (
 )
 
 func main() {
-	//log.SetFormatter(&log.JSONFormatter{})
-	log.SetReportCaller(true)
-	log.SetLevel(log.TraceLevel)
+	common.EnableGrayLog("ugb-processor")
 
 	app := new(appPackage.App)
 
