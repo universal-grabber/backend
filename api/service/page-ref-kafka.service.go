@@ -77,7 +77,7 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 							break MainLoop
 						}
 						pageChan <- pageRef
-						log.Print("accepted item: {}", pageRef)
+						//log.Print("accepted item: {}", pageRef)
 					case <-time.After(3 * time.Second):
 						interruptChan <- false
 						log.Print("timeout on topic: {}", topic)
@@ -98,6 +98,7 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 		wg.Wait()
 		interruptChan <- false
 		log.Debug("interrupt signal sent after wg done")
+		log.Debug("accepted items from kafka and send to processor: ", counter)
 	}()
 
 	go func() {
