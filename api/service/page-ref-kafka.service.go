@@ -82,7 +82,7 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 						}
 						counter++
 						pageChan <- pageRef
-						//log.Print("accepted item: {}", pageRef)
+						log.WithField("requestId", requestId).Debug("accepted item: {}", pageRef)
 					case <-time.After(3 * time.Second):
 						interruptChan <- false
 						log.WithField("requestId", requestId).Print("timeout on topic: {}", topic)
