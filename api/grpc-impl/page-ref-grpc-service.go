@@ -49,7 +49,7 @@ func (receiver PageRefGrpcService) Complete(_ context.Context, req *pb.PageRefLi
 
 	receiver.service.Complete(items)
 
-	return nil, nil
+	return new(base.Empty), nil
 }
 
 func (receiver PageRefGrpcService) Create(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
@@ -61,7 +61,7 @@ func (receiver PageRefGrpcService) Create(_ context.Context, req *pb.PageRefList
 
 	receiver.service.BulkInsert(items)
 
-	return nil, nil
+	return new(base.Empty), nil
 }
 
 func convertPageRef(ref *model.PageRef) *base.PageRef {
