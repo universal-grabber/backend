@@ -82,7 +82,9 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 func (receiver *ScheduleApiImpl) KafkaStats(c *gin.Context) {
 	kafka := helper.UgbKafkaInstance
 
-	kafka.GetConsumerGroupStats("FetchGroup")
+	res := kafka.GetConsumerGroupStats("FetchGroup")
+
+	c.JSON(200, res)
 }
 
 func (receiver *ScheduleApiImpl) ReadKafka(c *gin.Context) {

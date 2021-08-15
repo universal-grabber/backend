@@ -133,7 +133,7 @@ func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan 
 	return pageChan
 }
 
-func (s *UgbKafka) GetConsumerGroupStats(groupName string) {
+func (s *UgbKafka) GetConsumerGroupStats(groupName string) map[string][]kafka.PartitionAssignment {
 	conn, err := kafka.Dial("tcp", kafkaHost)
 	if err != nil {
 		panic(err.Error())
@@ -143,11 +143,12 @@ func (s *UgbKafka) GetConsumerGroupStats(groupName string) {
 	group, err := kafka.NewConsumerGroup(kafka.ConsumerGroupConfig{
 		ID:      groupName,
 		Brokers: []string{kafkaHost},
+		Topics:  []string{"ug_all-domains_DOWNLOAD_PENDING"},
 	})
 
 	gen, err := group.Next(context.TODO())
 
-	log.Print(gen, err)
+	return gen.Assignments
 }
 
 func locatePageRefTopic(ref *model.PageRef) string {
