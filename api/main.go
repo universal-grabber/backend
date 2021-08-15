@@ -6,8 +6,8 @@ import (
 	"backend/api/grpc-impl"
 	"backend/api/helper"
 	"backend/api/service"
+	"backend/common"
 	pb "backend/gen/proto/service/api"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -17,11 +17,9 @@ import (
 )
 
 func main() {
-	//log.SetFormatter(&log.JSONFormatter{})
-	log.SetReportCaller(true)
-	log.SetLevel(log.TraceLevel)
+	common.EnableGrayLog("ugb-api")
 
-	fmt.Print("Started\n")
+	log.Info("Started\n")
 
 	registerContext()
 
@@ -38,11 +36,11 @@ func main() {
 
 	go context.GetSchedulerService().Run()
 
-	fmt.Print("Listening on :8080\n")
+	log.Info("Listening on :8080\n")
 	err := r.Run(":8080")
 
 	if err != nil {
-		log.Print(err)
+		log.Error(err)
 	}
 }
 

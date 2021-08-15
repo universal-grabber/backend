@@ -1,14 +1,12 @@
 package main
 
 import (
+	"backend/common"
 	appPackage "backend/storage/app"
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetReportCaller(true)
-	log.SetLevel(log.InfoLevel)
+	common.EnableGrayLog("ugb-storage")
 
 	app := new(appPackage.App)
 
