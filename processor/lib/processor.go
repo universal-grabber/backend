@@ -4,6 +4,7 @@ import (
 	"backend/common"
 	"backend/gen/proto/base"
 	log "github.com/sirupsen/logrus"
+	"runtime/debug"
 	"sync"
 )
 
@@ -126,12 +127,13 @@ func (processor *Processor) runProcessItem(pageRef *base.PageRef, processorIndex
 	defer func() {
 		if r := recover(); r != nil {
 			common.PageRefLogger(pageRef, "run-process-panic").
-				Errorf("panicing process[%d]: %s / %s / %s / %s",
+				Errorf("panicing process[%d]: %s / %s / %s / %s / %s",
 					processorIndex,
 					processor.State,
 					pageRef.Id,
 					pageRef.Url,
-					r)
+					r,
+					string(debug.Stack()))
 		}
 	}()
 	return processor.TaskProcessFunc(pageRef)
