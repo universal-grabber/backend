@@ -25,6 +25,7 @@ func (receiver *ScheduleApiImpl) RegisterRoutes(r *gin.Engine) {
 
 	r.GET("/api/1.0/page-refs/schedule-kafka", receiver.ScheduleKafka)
 	r.GET("/api/1.0/page-refs/read-kafka", receiver.ReadKafka)
+	r.GET("/api/1.0/schedule/kafka-stats", receiver.KafkaStats)
 }
 
 func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
@@ -76,6 +77,12 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 		}
 	}()
 
+}
+
+func (receiver *ScheduleApiImpl) KafkaStats(c *gin.Context) {
+	kafka := helper.UgbKafkaInstance
+
+	kafka.GetConsumerGroupStats("FetchGroup")
 }
 
 func (receiver *ScheduleApiImpl) ReadKafka(c *gin.Context) {

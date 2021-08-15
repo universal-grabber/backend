@@ -26,6 +26,7 @@ func (s *UgbKafka) getReader(topic string, group string) *kafka.Reader {
 		GroupID:  group,
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
+		Logger:   log.WithField("topic", topic).WithField("group", group),
 	})
 }
 
@@ -66,6 +67,7 @@ func (s *UgbKafka) GetWriter(topic string) *kafka.Writer {
 			Topic:        topic,
 			Balancer:     &kafka.LeastBytes{},
 			BatchTimeout: 1 * time.Nanosecond,
+			Logger:       log.WithField("topic", topic),
 		}
 	}
 
@@ -108,7 +110,7 @@ func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan 
 			}
 			msg, err := r.ReadMessage(context.Background())
 
-			log.Debug("kafka topic/group/lag/offset ", topic, group, r.Lag(), r.Offset())
+			log.Debug("kafka topic/group/lag/offset ", topic, " ", group, " ", r.Lag(), " ", r.Offset(), " ")
 
 			if err != nil {
 				log.Error(err)
@@ -129,6 +131,23 @@ func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan 
 	}()
 
 	return pageChan
+}
+
+func (s *UgbKafka) GetConsumerGroupStats(groupName string) {
+	conn, err := kafka.Dial("tcp", kafkaHost)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer conn.Close()
+
+	group, err := kafka.NewConsumerGroup(kafka.ConsumerGroupConfig{
+		ID:      groupName,
+		Brokers: []string{kafkaHost},
+	})
+
+	gen, err := group.Next(context.TODO())
+
+	log.Print(gen, err)
 }
 
 func locatePageRefTopic(ref *model.PageRef) string {
