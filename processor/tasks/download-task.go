@@ -23,7 +23,7 @@ func (task *DownloadTask) Init(clients client.Clients) {
 		ApiClient:       task.clients.GetApiClient(),
 		TaskProcessFunc: task.process,
 		State:           base.PageRefState_DOWNLOAD,
-		Parallelism:     150,
+		Parallelism:     500,
 	}
 }
 
