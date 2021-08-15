@@ -7,6 +7,7 @@ import (
 	pb "backend/gen/proto/service/api"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -29,7 +30,9 @@ func (service *PageRefKafkaService) BulkInsert(list []*model.PageRef) {
 }
 
 func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []string, req *pb.PageRefFetchRequest, interruptChan chan bool) chan *model.PageRef {
-	log.Debug("Fetch requested")
+	requestId := rand.Intn(1000000)
+
+	log.WithField("requestId", requestId).Debug("Fetch requested")
 	pageChan := make(chan *model.PageRef)
 	kafka := helper.UgbKafkaInstance
 
@@ -38,26 +41,27 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 	go func() {
 		counter := 0
 
-		log.Debug("Request topics from kafka")
+		log.WithField("requestId", requestId).Debug("Request topics from kafka")
 		topics := kafka.ListTopics()
-		log.Debug("Topic list from kafka: {}", topics)
+		log.WithField("requestId", requestId).Debug("Topic list from kafka: {}", topics)
 
 		wg := new(sync.WaitGroup)
 
 		for _, topic := range topics {
 			if !strings.Contains(topic, state.String()) {
-				log.Print("topic {} ignored for state {}", topic, state)
+				log.WithField("requestId", requestId).Debug("topic {} ignored for state {}", topic, state)
 				continue
 			}
 
+			log.WithField("requestId", requestId).Debug("increase wg")
 			wg.Add(1)
 
 			localInterruptChan := make(chan bool)
 			interruptions = append(interruptions, localInterruptChan)
 
-			log.Debug("requesting kafka to fetch with topic: {}", topic)
+			log.WithField("requestId", requestId).Debug("requesting kafka to fetch with topic: {}", topic)
 			localPageChan := kafka.RecvPageRef(topic, "FetchGroup", localInterruptChan)
-			log.Debug("request accepted by kafka to fetch with topic: {}", topic)
+			log.WithField("requestId", requestId).Debug("request accepted by kafka to fetch with topic: {}", topic)
 
 			topic := topic
 			go func() {
@@ -72,37 +76,37 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 					select {
 					case pageRef, ok := <-localPageChan:
 						if !ok {
-							localInterruptChan <- false
-							log.Print("localPageChan not ok: {}", topic)
+							interruptChan <- false
+							log.WithField("requestId", requestId).Print("localPageChan not ok: {}", topic)
 							break MainLoop
 						}
 						counter++
 						pageChan <- pageRef
 						//log.Print("accepted item: {}", pageRef)
 					case <-time.After(3 * time.Second):
-						localInterruptChan <- false
-						log.Print("timeout on topic: {}", topic)
+						interruptChan <- false
+						log.WithField("requestId", requestId).Print("timeout on topic: {}", topic)
 						break MainLoop
 					}
 
 					if counter == 10000 {
-						localInterruptChan <- false
-						log.Debug("interrupt signal sent after max counter reached")
+						interruptChan <- false
+						log.WithField("requestId", requestId).Debug("interrupt signal sent after max counter reached")
 					}
 				}
-				log.Debug("request finished to fetch with topic: {}", topic)
+				log.WithField("requestId", requestId).Debug("request finished to fetch with topic: {}", topic)
 				wg.Done()
 			}()
 		}
 
 		wg.Wait()
 		interruptChan <- false
-		log.Debug("interrupt signal sent after wg done")
-		log.Debug("accepted items from kafka and send to processor: ", counter)
+		log.WithField("requestId", requestId).Debug("interrupt signal sent after wg done")
+		log.WithField("requestId", requestId).Debug("accepted items from kafka and send to processor: ", counter)
 	}()
 
 	go func() {
-		log.Debug("interrupt signal received")
+		log.WithField("requestId", requestId).Debug("interrupt signal received")
 		<-interruptChan
 
 		for _, interrupt := range interruptions {
