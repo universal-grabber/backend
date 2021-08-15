@@ -82,7 +82,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 func (receiver *ScheduleApiImpl) KafkaStats(c *gin.Context) {
 	kafka := helper.UgbKafkaInstance
 
-	res := kafka.GetConsumerGroupStats("FetchGroup")
+	res := kafka.GetConsumerGroupStats("FetchGroup", []string{"ug_all-domains_DOWNLOAD_PENDING"})
 
 	c.JSON(200, res)
 }
