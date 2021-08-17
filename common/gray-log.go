@@ -12,5 +12,5 @@ func EnableGrayLog(service string) {
 	hook := graylog.NewGraylogHook("ug.tisserv.net:12201", map[string]interface{}{"service": service})
 	hook.Level = log.TraceLevel
 	log.AddHook(hook)
-	//log.SetFormatter(new(NullFormatter)) // Don't send logs to stdout
+	log.SetFormatter(new(NullFormatter)) // Don't send logs to stdout
 }
