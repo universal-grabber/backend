@@ -68,6 +68,7 @@ func (s *UgbKafka) GetWriter(topic string) *kafka.Writer {
 			Balancer:     &kafka.LeastBytes{},
 			BatchTimeout: 1 * time.Second,
 			Logger:       log.WithField("topic", topic),
+			Async:        true,
 		}
 	}
 
