@@ -36,15 +36,13 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	err := helper.ParseRequestQuery(c.Request, searchPageRef)
 
 	requestId := rand.Intn(1000000)
+	opLog := log.WithField("requestId", requestId).
+		WithField("operation", "schedule-kafka")
 
-	log.WithField("requestId", requestId).
-		WithField("operation", "schedule-kafka").
-		Info("starting to schedule: ", searchPageRef.State, searchPageRef.Status, searchPageRef.Tags)
+	opLog.Info("starting to schedule: ", searchPageRef.State, searchPageRef.Status, searchPageRef.Tags)
 
 	if err != nil {
-		log.WithField("requestId", requestId).
-			WithField("operation", "schedule-kafka").
-			Error(err)
+		opLog.Error(err)
 		return
 	}
 
@@ -58,61 +56,46 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 		interruptChan := make(chan bool)
 		// search async
 
+		pageLog := opLog.WithField("page", searchPageRef.Page)
+
 		for {
-			log.WithField("requestId", requestId).
-				WithField("page", searchPageRef.Page).
-				WithField("operation", "schedule-kafka").
-				Info("starting fetch page")
+			pageLog.Info("starting fetch page")
 			pageChan := make(chan *model.PageRef, 100)
 			go func() {
-				log.WithField("requestId", requestId).
-					WithField("page", searchPageRef.Page).
-					WithField("operation", "schedule-kafka").
-					Debug("request search")
+				pageLog.Debug("request search")
 
 				receiver.service.Search(searchPageRef, pageChan, interruptChan)
 
-				log.WithField("requestId", requestId).
-					WithField("page", searchPageRef.Page).
-					WithField("operation", "schedule-kafka").
-					Debug("end request search")
+				pageLog.Debug("end request search")
 			}()
 
 			localCount := 0
 			for pageRef := range pageChan {
 				localCount++
 
+				pageLog.Tracef("send-page-to-kafka: %s", pageRef.Id)
 				err := kafka.SendPageRef(pageRef)
 
 				timeCalc.Step()
 
 				if err != nil {
-					log.Error(err)
+					pageLog.Error(err)
 					break
 				}
 			}
 			count += localCount
 
-			log.WithField("requestId", requestId).
-				WithField("page", searchPageRef.Page).
-				WithField("operation", "schedule-kafka").
-				Debugf("localCount: %d; totalCount: %d", localCount, count)
+			pageLog.Debugf("localCount: %d; totalCount: %d", localCount, count)
 
 			searchPageRef.Page++
 			if maxSize <= count {
-				log.WithField("requestId", requestId).
-					WithField("page", searchPageRef.Page).
-					WithField("operation", "schedule-kafka").
-					Debugf("interrupting as count reached max size %d / %d", localCount, count)
+				pageLog.Debugf("interrupting as count reached max size %d / %d", localCount, count)
 
 				interruptChan <- true
 				break
 			}
 			if localCount == 0 {
-				log.WithField("requestId", requestId).
-					WithField("page", searchPageRef.Page).
-					WithField("operation", "schedule-kafka").
-					Debugf("interrupting as data end reached %d / %d", localCount, count)
+				pageLog.Debugf("interrupting as data end reached %d / %d", localCount, count)
 
 				interruptChan <- true
 				break

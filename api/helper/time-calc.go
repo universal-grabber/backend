@@ -12,6 +12,7 @@ type TimeCalc struct {
 
 	lastCount uint64
 	counter   uint64
+	_log      *log.Entry
 }
 
 func (obj *TimeCalc) Init(name string) {
@@ -22,6 +23,12 @@ func (obj *TimeCalc) Init(name string) {
 
 	obj.lastCount = 0
 	obj.counter = 0
+
+	obj._log = log.WithField("component", "time-calc")
+}
+
+func (obj *TimeCalc) Logger(logEntry *log.Entry) {
+	obj._log = logEntry
 }
 
 func (obj *TimeCalc) Step() {
@@ -42,6 +49,6 @@ func (obj *TimeCalc) StepWithExceedMillis(exceedMillis int64) {
 		lastSpeed := float32(diff) * 1000 / float32(diffTime)
 		speed := float32(obj.counter) * 1000 / float32(diffTimeFromStart)
 
-		log.Printf("%s: %.2f ops, %.2f aops %d \n", obj.name, lastSpeed, speed, obj.counter)
+		obj._log.Printf("%s: %.2f ops, %.2f aops %d \n", obj.name, lastSpeed, speed, obj.counter)
 	}
 }
