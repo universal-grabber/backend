@@ -7,7 +7,7 @@ import (
 	"backend/api/service"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"strconv"
+	"math/rand"
 )
 
 type ScheduleApiImpl struct {
@@ -23,9 +23,7 @@ func (receiver *ScheduleApiImpl) RegisterRoutes(r *gin.Engine) {
 	r.GET("/api/1.0/schedule/website", receiver.manualScheduleWebsite)
 	r.GET("/api/1.0/schedule/reload", receiver.reload)
 
-	r.GET("/api/1.0/page-refs/schedule-kafka", receiver.ScheduleKafka)
-	r.GET("/api/1.0/page-refs/read-kafka", receiver.ReadKafka)
-	r.GET("/api/1.0/schedule/kafka-stats", receiver.KafkaStats)
+	r.GET("/api/1.0/schedule/kafka", receiver.ScheduleKafka)
 }
 
 func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
@@ -37,26 +35,46 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	searchPageRef := new(model.SearchPageRef)
 	err := helper.ParseRequestQuery(c.Request, searchPageRef)
 
+	requestId := rand.Intn(1000000)
+
+	log.WithField("requestId", requestId).
+		Info("starting to schedule: ", searchPageRef)
+
 	if err != nil {
-		panic(err)
+		log.WithField("requestId", requestId).Error(err)
+		return
 	}
 
-	page := searchPageRef.Page
+	maxSize := searchPageRef.PageSize
+	count := 0
+
+	searchPageRef.PageSize = 10000
 	searchPageRef.Page = 0
 
 	go func() {
 		interruptChan := make(chan bool)
 		// search async
+
 		for {
+			log.WithField("requestId", requestId).
+				WithField("page", searchPageRef.Page).
+				Info("starting fetch page")
 			pageChan := make(chan *model.PageRef, 100)
 			go func() {
+				log.WithField("requestId", requestId).
+					WithField("page", searchPageRef.Page).
+					Debug("request search")
+
 				receiver.service.Search(searchPageRef, pageChan, interruptChan)
+
+				log.WithField("requestId", requestId).
+					WithField("page", searchPageRef.Page).
+					Debug("end request search")
 			}()
 
-			count := 0
-
+			localCount := 0
 			for pageRef := range pageChan {
-				count++
+				localCount++
 
 				err := kafka.SendPageRef(pageRef)
 
@@ -64,52 +82,35 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 				if err != nil {
 					log.Error(err)
-					return
+					break
 				}
 			}
-			log.Print(200, "SCHEDULED: "+strconv.Itoa(count))
+			count += localCount
+
+			log.WithField("requestId", requestId).
+				WithField("page", searchPageRef.Page).
+				Debug("localCount: %d; totalCount: %d", localCount, count)
 
 			searchPageRef.Page++
-			if searchPageRef.Page >= page {
+			if maxSize <= count {
+				log.WithField("requestId", requestId).
+					WithField("page", searchPageRef.Page).
+					Debug("interrupting as count reached max size %d / %d", localCount, count)
+
+				interruptChan <- true
+				break
+			}
+			if localCount == 0 {
+				log.WithField("requestId", requestId).
+					WithField("page", searchPageRef.Page).
+					Debug("interrupting as data end reached", localCount, count)
+
 				interruptChan <- true
 				break
 			}
 		}
 	}()
 
-}
-
-func (receiver *ScheduleApiImpl) KafkaStats(c *gin.Context) {
-	kafka := helper.UgbKafkaInstance
-
-	res := kafka.GetConsumerGroupStats("FetchGroup", []string{"ug_all-domains_DOWNLOAD_PENDING"})
-
-	c.JSON(200, res)
-}
-
-func (receiver *ScheduleApiImpl) ReadKafka(c *gin.Context) {
-	timeCalc := new(helper.TimeCalc)
-	timeCalc.Init("ScheduleKafka")
-
-	kafka := helper.UgbKafkaInstance
-
-	topic := c.Request.URL.Query().Get("topic")
-	group := c.Request.URL.Query().Get("group")
-
-	pageChan := kafka.RecvPageRef(topic, group, c.Writer.CloseNotify())
-
-	c.String(200, "[\n")
-	isFirst := true
-	for pageRef := range pageChan {
-		if !isFirst {
-			c.String(200, ",\n")
-		}
-		isFirst = false
-
-		c.JSON(200, pageRef)
-	}
-
-	c.String(200, "\n]")
 }
 
 func (receiver *ScheduleApiImpl) applyTags(context *gin.Context) {
