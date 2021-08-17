@@ -38,10 +38,13 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	requestId := rand.Intn(1000000)
 
 	log.WithField("requestId", requestId).
+		WithField("operation", "schedule-kafka").
 		Info("starting to schedule: ", searchPageRef)
 
 	if err != nil {
-		log.WithField("requestId", requestId).Error(err)
+		log.WithField("requestId", requestId).
+			WithField("operation", "schedule-kafka").
+			Error(err)
 		return
 	}
 
@@ -58,17 +61,20 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 		for {
 			log.WithField("requestId", requestId).
 				WithField("page", searchPageRef.Page).
+				WithField("operation", "schedule-kafka").
 				Info("starting fetch page")
 			pageChan := make(chan *model.PageRef, 100)
 			go func() {
 				log.WithField("requestId", requestId).
 					WithField("page", searchPageRef.Page).
+					WithField("operation", "schedule-kafka").
 					Debug("request search")
 
 				receiver.service.Search(searchPageRef, pageChan, interruptChan)
 
 				log.WithField("requestId", requestId).
 					WithField("page", searchPageRef.Page).
+					WithField("operation", "schedule-kafka").
 					Debug("end request search")
 			}()
 
@@ -89,12 +95,14 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 			log.WithField("requestId", requestId).
 				WithField("page", searchPageRef.Page).
+				WithField("operation", "schedule-kafka").
 				Debug("localCount: %d; totalCount: %d", localCount, count)
 
 			searchPageRef.Page++
 			if maxSize <= count {
 				log.WithField("requestId", requestId).
 					WithField("page", searchPageRef.Page).
+					WithField("operation", "schedule-kafka").
 					Debug("interrupting as count reached max size %d / %d", localCount, count)
 
 				interruptChan <- true
@@ -103,6 +111,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 			if localCount == 0 {
 				log.WithField("requestId", requestId).
 					WithField("page", searchPageRef.Page).
+					WithField("operation", "schedule-kafka").
 					Debug("interrupting as data end reached", localCount, count)
 
 				interruptChan <- true
