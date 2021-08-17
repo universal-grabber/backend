@@ -39,7 +39,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 	log.WithField("requestId", requestId).
 		WithField("operation", "schedule-kafka").
-		Info("starting to schedule: ", searchPageRef)
+		Info("starting to schedule: ", searchPageRef.State, searchPageRef.Status, searchPageRef.Tags)
 
 	if err != nil {
 		log.WithField("requestId", requestId).
@@ -96,14 +96,14 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 			log.WithField("requestId", requestId).
 				WithField("page", searchPageRef.Page).
 				WithField("operation", "schedule-kafka").
-				Debug("localCount: %d; totalCount: %d", localCount, count)
+				Debugf("localCount: %d; totalCount: %d", localCount, count)
 
 			searchPageRef.Page++
 			if maxSize <= count {
 				log.WithField("requestId", requestId).
 					WithField("page", searchPageRef.Page).
 					WithField("operation", "schedule-kafka").
-					Debug("interrupting as count reached max size %d / %d", localCount, count)
+					Debugf("interrupting as count reached max size %d / %d", localCount, count)
 
 				interruptChan <- true
 				break
@@ -112,7 +112,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 				log.WithField("requestId", requestId).
 					WithField("page", searchPageRef.Page).
 					WithField("operation", "schedule-kafka").
-					Debug("interrupting as data end reached", localCount, count)
+					Debugf("interrupting as data end reached %d / %d", localCount, count)
 
 				interruptChan <- true
 				break
