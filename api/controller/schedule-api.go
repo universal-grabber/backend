@@ -73,7 +73,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 			buffer = append(buffer, pageRef)
 
-			if len(buffer) == 1000 {
+			if len(buffer) >= 100000 {
 				log.Info("starting flush %d out of %d", buffer, count)
 				err := kafka.SendPageRef(buffer)
 				if err != nil {
@@ -81,6 +81,8 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 					break
 				}
 				log.Info("end flush %d out of %d", buffer, count)
+
+				buffer = nil
 			}
 
 			timeCalc.Step()
