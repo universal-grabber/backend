@@ -95,7 +95,11 @@ func (s *UgbKafka) SendPageRef(list []*model.PageRef) error {
 	}
 
 	for topic, list := range messagesMap {
+		log.Infof("begin sending %d items to kafka on topic %s", len(list), topic)
+
 		err := s.GetWriter(topic).WriteMessages(context.Background(), list...)
+
+		log.Infof("finish sending %d items to kafka on topic %s", len(list), topic)
 
 		if err != nil {
 			return err

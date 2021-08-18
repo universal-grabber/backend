@@ -41,6 +41,8 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 	opLog.Info("starting to schedule: ", searchPageRef.State, searchPageRef.Status, searchPageRef.Tags)
 
+	timeCalc.Logger(opLog)
+
 	if err != nil {
 		opLog.Error(err)
 		return
@@ -72,21 +74,27 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 			buffer = append(buffer, pageRef)
 
 			if len(buffer) == 1000 {
+				log.Info("starting flush %d out of %d", buffer, count)
 				err := kafka.SendPageRef(buffer)
 				if err != nil {
 					pageLog.Error(err)
 					break
 				}
+				log.Info("end flush %d out of %d", buffer, count)
 			}
 
 			timeCalc.Step()
 		}
 
 		if buffer != nil && len(buffer) > 0 {
+			log.Info("starting flush %d out of %d (tail)", buffer, count)
+
 			err := kafka.SendPageRef(buffer)
 			if err != nil {
 				pageLog.Error(err)
 			}
+
+			log.Info("end flush %d out of %d (tail)", buffer, count)
 		}
 
 		pageLog.Debugf("message sent kafka count: %d", count)
