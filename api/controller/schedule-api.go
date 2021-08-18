@@ -49,7 +49,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	maxSize := searchPageRef.PageSize
 	count := 0
 
-	searchPageRef.PageSize = 10000
+	searchPageRef.PageSize = 1000000
 	searchPageRef.Page = 0
 
 	go func() {
