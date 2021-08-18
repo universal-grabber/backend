@@ -68,28 +68,41 @@ func (s *UgbKafka) GetWriter(topic string) *kafka.Writer {
 			Balancer:     &kafka.LeastBytes{},
 			BatchTimeout: 1 * time.Second,
 			Logger:       log.WithField("topic", topic),
-			Async:        true,
+			Async:        false,
 		}
 	}
 
 	return s.writerMap[topic]
 }
 
-func (s *UgbKafka) SendPageRef(pageRef *model.PageRef) error {
-	topic := locatePageRefTopic(pageRef)
+func (s *UgbKafka) SendPageRef(list []*model.PageRef) error {
+	var messagesMap = make(map[string][]kafka.Message)
 
-	body, err := json.Marshal(pageRef)
+	for _, pageRef := range list {
+		topic := locatePageRefTopic(pageRef)
+		body, err := json.Marshal(pageRef)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+
+		message := kafka.Message{
+			Key:   []byte(pageRef.Id.String()),
+			Value: body,
+		}
+
+		messagesMap[topic] = append(messagesMap[topic], message)
 	}
 
-	err = s.GetWriter(topic).WriteMessages(context.Background(), kafka.Message{
-		Key:   []byte(pageRef.Id.String()),
-		Value: body,
-	})
+	for topic, list := range messagesMap {
+		err := s.GetWriter(topic).WriteMessages(context.Background(), list...)
 
-	return err
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan bool) <-chan *model.PageRef {

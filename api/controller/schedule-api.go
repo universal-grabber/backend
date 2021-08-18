@@ -30,7 +30,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	timeCalc := new(helper.TimeCalc)
 	timeCalc.Init("ScheduleKafka")
 
-	//kafka := helper.UgbKafkaInstance
+	kafka := helper.UgbKafkaInstance
 
 	searchPageRef := new(model.SearchPageRef)
 	err := helper.ParseRequestQuery(c.Request, searchPageRef)
@@ -46,11 +46,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 		return
 	}
 
-	maxSize := searchPageRef.PageSize
 	count := 0
-
-	searchPageRef.PageSize = 1000000
-	searchPageRef.Page = 0
 
 	go func() {
 		interruptChan := make(chan bool)
@@ -58,49 +54,42 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 		pageLog := opLog.WithField("page", searchPageRef.Page)
 
-		for {
-			pageLog.Info("starting fetch page")
-			pageChan := make(chan *model.PageRef, 100)
-			go func() {
-				pageLog.Debug("request search")
+		pageLog.Info("starting fetch page")
+		pageChan := make(chan *model.PageRef, 100)
+		go func() {
+			pageLog.Debug("request search")
 
-				receiver.service.Search(searchPageRef, pageChan, interruptChan)
+			receiver.service.Search(searchPageRef, pageChan, interruptChan)
 
-				pageLog.Debug("end request search")
-			}()
+			pageLog.Debug("end request search")
+		}()
 
-			localCount := 0
-			for range pageChan {
-				localCount++
+		var buffer []*model.PageRef
 
-				//pageLog.Tracef("send-page-to-kafka: %s", pageRef.Id)
-				//err := kafka.SendPageRef(pageRef)
+		for pageRef := range pageChan {
+			count++
 
-				timeCalc.Step()
+			buffer = append(buffer, pageRef)
 
-				//if err != nil {
-				//	pageLog.Error(err)
-				//	break
-				//}
+			if len(buffer) == 1000 {
+				err := kafka.SendPageRef(buffer)
+				if err != nil {
+					pageLog.Error(err)
+					break
+				}
 			}
-			count += localCount
 
-			pageLog.Debugf("localCount: %d; totalCount: %d", localCount, count)
+			timeCalc.Step()
+		}
 
-			searchPageRef.Page++
-			if maxSize <= count {
-				pageLog.Debugf("interrupting as count reached max size %d / %d", localCount, count)
-
-				interruptChan <- true
-				break
-			}
-			if localCount == 0 {
-				pageLog.Debugf("interrupting as data end reached %d / %d", localCount, count)
-
-				interruptChan <- true
-				break
+		if buffer != nil && len(buffer) > 0 {
+			err := kafka.SendPageRef(buffer)
+			if err != nil {
+				pageLog.Error(err)
 			}
 		}
+
+		pageLog.Debugf("message sent kafka count: %d", count)
 	}()
 
 }
