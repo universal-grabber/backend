@@ -74,13 +74,13 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 			buffer = append(buffer, pageRef)
 
 			if len(buffer) >= 100000 {
-				log.Info("starting flush %d out of %d", buffer, count)
+				pageLog.Info("starting flush %d out of %d", buffer, count)
 				err := kafka.SendPageRef(buffer)
 				if err != nil {
 					pageLog.Error(err)
 					break
 				}
-				log.Info("end flush %d out of %d", buffer, count)
+				pageLog.Info("end flush %d out of %d", buffer, count)
 
 				buffer = nil
 			}
@@ -89,14 +89,14 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 		}
 
 		if buffer != nil && len(buffer) > 0 {
-			log.Info("starting flush %d out of %d (tail)", buffer, count)
+			pageLog.Info("starting flush %d out of %d (tail)", buffer, count)
 
 			err := kafka.SendPageRef(buffer)
 			if err != nil {
 				pageLog.Error(err)
 			}
 
-			log.Info("end flush %d out of %d (tail)", buffer, count)
+			pageLog.Info("end flush %d out of %d (tail)", buffer, count)
 		}
 
 		pageLog.Debugf("message sent kafka count: %d", count)
