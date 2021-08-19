@@ -74,7 +74,7 @@ func (app *App) Get(ctx context.Context, pageRef *base.PageRef) (*pb.StoreResult
 }
 func (app *App) Store(ctx context.Context, pageRef *base.PageRef) (*pb.StoreResult, error) {
 	requestId := uuid.NewV4()
-	common.PageRefLogger(pageRef, "receive-store-request").Debugf("requestId: %s", requestId)
+	common.PageRefLogger(pageRef, "receive-store-request").Tracef("requestId: %s", requestId)
 
 	storeResult, err := app.read(pageRef, false)
 
@@ -136,8 +136,8 @@ func (app *App) read(pageRef *base.PageRef, require bool) (*pb.StoreResult, erro
 
 			tryAllowed := storeResult.State == pb.State_NO_CONTENT
 
-			if tryAllowed {
-				common.PageRefLogger(pageRef, "try-download").Debugf("try count: %d", downloadTry)
+			if tryAllowed && downloadTry > 2 {
+				common.PageRefLogger(pageRef, "try-download").Debug("try count: %d", downloadTry)
 			}
 
 			if !tryAllowed {
@@ -161,7 +161,7 @@ func (app *App) read(pageRef *base.PageRef, require bool) (*pb.StoreResult, erro
 				}
 			}
 
-			common.PageRefLogger(pageRef, "store-page-ref").Debugf("storing page ref")
+			common.PageRefLogger(pageRef, "store-page-ref").Tracef("storing page ref")
 			err = storage.Add(toUUID(pageRef.GetId()), result)
 
 			if err != nil {
