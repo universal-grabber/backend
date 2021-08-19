@@ -255,6 +255,8 @@ func (app *App) download(url string) []byte {
 func getDDHost() string {
 	hosts := []string{
 		"ug.tisserv.net:8234",
+		"ug.tisserv.net:8235",
+		"ug.tisserv.net:8236",
 		"tisserv.net:8234",
 		"kube.tisserv.net:8234",
 	}
