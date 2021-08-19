@@ -128,8 +128,6 @@ func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan 
 			}
 			msg, err := r.ReadMessage(context.Background())
 
-			log.Debug("kafka topic/group/lag/offset ", topic, " ", group, " ", r.Lag(), " ", r.Offset(), " ")
-
 			if err != nil {
 				log.Error(err)
 				return
