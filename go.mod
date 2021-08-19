@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/PuerkitoBio/goquery v1.6.1
-	github.com/gemnasium/logrus-graylog-hook/v3 v3.0.3
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.7.0
 	github.com/google/uuid v1.1.2
@@ -14,6 +13,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/sirupsen/logrus v1.8.1
+	github.com/tislib/logrus-graylog-hook/v3 v3.0.4
 	github.com/urfave/cli/v2 v2.3.0
 	go.mongodb.org/mongo-driver v1.5.1
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
