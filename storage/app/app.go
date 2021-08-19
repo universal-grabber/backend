@@ -256,6 +256,7 @@ func getDDHost() string {
 	hosts := []string{
 		"ug.tisserv.net:8234",
 		"tisserv.net:8234",
+		"kube.tisserv.net:8234",
 	}
 
 	return hosts[rand.Intn(len(hosts))]
