@@ -64,7 +64,7 @@ func (app *App) initDownloadClient() {
 
 func (app *App) Get(ctx context.Context, pageRef *base.PageRef) (*pb.StoreResult, error) {
 	requestId := uuid.NewV4()
-	common.PageRefLogger(pageRef, "receive-get-request").Debugf("requestId: %s", requestId)
+	common.PageRefLogger(pageRef, "receive-get-request").Tracef("requestId: %s", requestId)
 
 	storeResult, err := app.read(pageRef, true)
 
@@ -217,7 +217,7 @@ func checkStoreResult(result *pb.StoreResult, pageRef *base.PageRef) {
 	//} else {
 	result.Ok = true
 	result.State = pb.State_DOWNLOADED
-	log.Debugf("page-ref downloaded %s", pageRef.Url)
+	log.Tracef("page-ref downloaded %s", pageRef.Url)
 	//}
 }
 
