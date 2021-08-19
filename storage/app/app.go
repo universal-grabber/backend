@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/http2"
 	"google.golang.org/grpc"
 	"io"
+	"math/rand"
 	"net"
 	"net/http"
 	"strings"
@@ -222,11 +223,13 @@ func checkStoreResult(result *pb.StoreResult, pageRef *base.PageRef) {
 }
 
 func (app *App) download(url string) []byte {
-	downloadUrl := "https://ug.tisserv.net:8234/get-clean?noProxy=true&url=" + url
+	downloadUrl := "https://" + getDDHost() + "/get-clean?noProxy=true&url=" + url
+	log.Print("downloading via:", downloadUrl)
+
 	resp, err := app.downloaderClient.Get(downloadUrl)
 
 	if err != nil {
-		log.Print(err)
+		log.Warn(err)
 		return nil
 	}
 
@@ -236,17 +239,26 @@ func (app *App) download(url string) []byte {
 	_, err = io.Copy(data, resp.Body)
 
 	if err != nil {
-		log.Print(err)
+		log.Warn(err)
 		return nil
 	}
 
 	content := data.String()
 
 	if strings.Contains(content, "DDoS protection by") {
-		log.Printf("DDoS protection by page received: %s", url)
+		log.Warnf("DDoS protection by page received: %s", url)
 	}
 
 	return []byte(content)
+}
+
+func getDDHost() string {
+	hosts := []string{
+		"ug.tisserv.net:8234",
+		"tisserv.net:8234",
+	}
+
+	return hosts[rand.Intn(len(hosts))]
 }
 
 func (app *App) getStorageBackend(ref *base.PageRef) engine.StorageEngineBackend {
