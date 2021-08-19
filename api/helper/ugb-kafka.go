@@ -26,7 +26,7 @@ func (s *UgbKafka) getReader(topic string, group string) *kafka.Reader {
 		GroupID:  group,
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
-		Logger:   log.WithField("topic", topic).WithField("group", group),
+		//Logger:   log.WithField("topic", topic).WithField("group", group),
 	})
 }
 
@@ -67,8 +67,8 @@ func (s *UgbKafka) GetWriter(topic string) *kafka.Writer {
 			Topic:        topic,
 			Balancer:     &kafka.LeastBytes{},
 			BatchTimeout: 1 * time.Second,
-			Logger:       log.WithField("topic", topic),
-			Async:        false,
+			//Logger:       log.WithField("topic", topic),
+			Async: false,
 		}
 	}
 
