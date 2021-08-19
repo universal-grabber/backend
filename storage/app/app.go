@@ -174,7 +174,7 @@ func (app *App) read(pageRef *base.PageRef, require bool) (*pb.StoreResult, erro
 
 		return storeResult, err
 	} else {
-		log.Debugf("page-ref-download-skipped %s %s %s %s, %d", pageRef.Url, forceDownload, exists, lazyDownload, require)
+		log.Tracef("page-ref-download-skipped %s %s %s %s, %d", pageRef.Url, forceDownload, exists, lazyDownload, require)
 		if rec != nil {
 			storeResult.State = pb.State_ALREADY_DOWNLOADED
 			storeResult.Content = string(rec)
