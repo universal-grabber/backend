@@ -81,7 +81,13 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 			// provision topic if we found it first time
 			if !contains(topics, pageRefTopic) && searchPageRef.Provision {
-				kafka.ProvisionTopic(pageRefTopic)
+				err := kafka.ProvisionTopic(pageRefTopic)
+				if err != nil {
+					log.Error(err)
+					c.Error(err)
+					interruptChan <- true
+					return
+				}
 			}
 
 			if len(buffer) >= 100000 {

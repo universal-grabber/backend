@@ -184,12 +184,14 @@ func (s *UgbKafka) ProvisionTopic(topic string) error {
 
 	defer conn.Close()
 
+	log.Infof("provisioning / deleing topic: %s", topic)
 	err = conn.DeleteTopics(topic)
 
 	if err != nil {
 		return err
 	}
 
+	log.Infof("provisioning / creating topic: %s", topic)
 	return conn.CreateTopics(kafka.TopicConfig{
 		Topic:             topic,
 		NumPartitions:     8,
