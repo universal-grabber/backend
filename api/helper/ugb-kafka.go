@@ -79,6 +79,11 @@ func (s *UgbKafka) SendPageRef(list []model.PageRef) error {
 	var messagesMap = make(map[string][]kafka.Message)
 
 	for _, pageRef := range list {
+		log.Tracef("not sending item to kafka as it is not in pending state %s / %s", pageRef.Id.String(), pageRef.Data.Status)
+		if pageRef.Data.Status != "PENDING" {
+			continue
+		}
+
 		topic := locatePageRefTopic(pageRef)
 		body, err := json.Marshal(pageRef)
 
@@ -168,5 +173,5 @@ func (s *UgbKafka) GetConsumerGroupStats(groupName string, topics []string) map[
 }
 
 func locatePageRefTopic(ref model.PageRef) string {
-	return "ug_" + ref.Data.Source + "_" + ref.Data.State + "_" + ref.Data.Status
+	return "ug_" + ref.Data.Source + "_" + ref.Data.State
 }

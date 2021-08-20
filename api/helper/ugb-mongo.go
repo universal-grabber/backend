@@ -46,8 +46,8 @@ func (obj *UgbMongo) Init() {
 		log.Panic(err)
 	}
 
-	// ensure indexes
-	//obj.initIndexes()
+	//ensure indexes
+	obj.initIndexes()
 }
 
 func (obj *UgbMongo) GetCollection(database string, name string) *mongo.Collection {
@@ -63,18 +63,18 @@ func (obj *UgbMongo) initIndexes() {
 	*truePointer = true
 
 	obj.GetCollection(_const.UgbMongoDb, "pageRef").Indexes().CreateOne(context.TODO(), mongo.IndexModel{
-		Keys: bson.M{"url": 1},
+		Keys: bson.M{"data.url": 1},
 		Options: &options.IndexOptions{
 			Unique: truePointer,
 		},
 	})
 
 	obj.GetCollection(_const.UgbMongoDb, "pageRef").Indexes().CreateOne(context.TODO(), mongo.IndexModel{
-		Keys: bson.M{"websiteName": 1, "state": 1, "status": 1},
+		Keys: bson.M{"data.websiteName": 1, "data.state": 1, "data.status": 1},
 	})
 
 	obj.GetCollection(_const.UgbMongoDb, "pageRef").Indexes().CreateOne(context.TODO(), mongo.IndexModel{
-		Keys: bson.M{"state": 1, "status": 1},
+		Keys: bson.M{"data.state": 1, "status": 1},
 	})
 
 	obj.GetCollection(_const.UgbMongoDb, "pageRef").Indexes().CreateOne(context.TODO(), mongo.IndexModel{
