@@ -68,10 +68,21 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 		var buffer []model.PageRef
 
+		var topics []string
+
 		for pageRef := range pageChan {
 			count++
 
+			context2.GetSchedulerService().ConfigurePageRef(pageRef)
+
 			buffer = append(buffer, *pageRef)
+
+			pageRefTopic := kafka.LocatePageRefTopic(*pageRef)
+
+			// provision topic if we found it first time
+			if !contains(topics, pageRefTopic) && searchPageRef.Provision {
+				kafka.ProvisionTopic(pageRefTopic)
+			}
 
 			if len(buffer) >= 100000 {
 				pageLog.Info("starting flush %d out of %d", buffer, count)

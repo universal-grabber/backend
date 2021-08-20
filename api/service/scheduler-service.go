@@ -129,8 +129,6 @@ func (s *SchedulerServiceImpl) ConfigurePageRef(pageRef *model.PageRef) {
 	if pageRef.Data.Status == "FINISHED" {
 		s.ConfigureNextTask(pageRef)
 	}
-
-	s.ConfigurePageUrl(pageRef)
 }
 
 func (s *SchedulerServiceImpl) ConfigureNextTask(ref *model.PageRef) {

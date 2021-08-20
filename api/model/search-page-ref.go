@@ -9,4 +9,5 @@ type SearchPageRef struct {
 	PageSize    int
 	Tags        []string
 	ProcessAll  bool
+	Provision   bool
 }

@@ -81,7 +81,7 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 						break MainLoop
 					}
 
-					if counter == 100000 {
+					if counter == 10000 {
 						interruptChan <- false
 						log.WithField("requestId", requestId).Debug("interrupt signal sent after max counter reached")
 					}

@@ -267,6 +267,7 @@ func (service *PageRefService) BulkInsert(list []model.PageRef) {
 	for _, pageRef := range list {
 		helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref")
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
+		context2.GetSchedulerService().ConfigurePageUrl(&pageRef)
 
 		if util.Contains(*pageRef.Data.Tags, "delete") {
 			helper.PageRefLogger(&pageRef, "bulk-insert").Debug("inserting page-ref filtered by delete tag")

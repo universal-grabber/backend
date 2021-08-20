@@ -21,6 +21,7 @@ type TagsService interface {
 type SchedulerService interface {
 	Run()
 	ConfigurePageRef(pageRef *model.PageRef)
+	ConfigurePageUrl(pageRef *model.PageRef)
 	ScheduleWebsiteManual(websiteName string)
 	ReloadWebsites()
 }

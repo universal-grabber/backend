@@ -84,7 +84,7 @@ func (s *UgbKafka) SendPageRef(list []model.PageRef) error {
 			continue
 		}
 
-		topic := locatePageRefTopic(pageRef)
+		topic := s.LocatePageRefTopic(pageRef)
 		body, err := json.Marshal(pageRef)
 
 		if err != nil {
@@ -172,6 +172,27 @@ func (s *UgbKafka) GetConsumerGroupStats(groupName string, topics []string) map[
 	return gen.Assignments
 }
 
-func locatePageRefTopic(ref model.PageRef) string {
+func (s *UgbKafka) LocatePageRefTopic(ref model.PageRef) string {
 	return "ug_" + ref.Data.Source + "_" + ref.Data.State
+}
+
+func (s *UgbKafka) ProvisionTopic(topic string) error {
+	conn, err := kafka.Dial("tcp", kafkaHost)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	err = conn.DeleteTopics(topic)
+
+	if err != nil {
+		return err
+	}
+
+	return conn.CreateTopics(kafka.TopicConfig{
+		Topic:             topic,
+		NumPartitions:     8,
+		ReplicationFactor: 1,
+	})
 }
