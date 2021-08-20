@@ -43,7 +43,7 @@ func (service *PageRefService) Search(searchPageRef *model.SearchPageRef, pageCh
 		for _, website := range websites {
 
 			filters := util.PrepareFilter(searchPageRef)
-			filters["websiteName"] = website.Name
+			filters["data.websiteName"] = website.Name
 			chanArr = append(chanArr, util.SearchByFilter(db, filters, interruptChan, opts))
 		}
 

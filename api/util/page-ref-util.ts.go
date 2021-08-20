@@ -20,19 +20,19 @@ func PrepareFilter(searchPageRef *model.SearchPageRef) bson.M {
 	filters := bson.M{}
 
 	if !searchPageRef.FairSearch && len(searchPageRef.WebsiteName) > 0 {
-		filters["websiteName"] = searchPageRef.WebsiteName
+		filters["data.websiteName"] = searchPageRef.WebsiteName
 	}
 
 	if len(searchPageRef.State) > 0 {
-		filters["state"] = searchPageRef.State
+		filters["data.state"] = searchPageRef.State
 	}
 
 	if len(searchPageRef.Status) > 0 {
-		filters["status"] = searchPageRef.Status
+		filters["data.status"] = searchPageRef.Status
 	}
 
 	if len(searchPageRef.Tags) > 0 {
-		filters["tags"] = bson.M{"$in": searchPageRef.Tags}
+		filters["data.tags"] = bson.M{"$in": searchPageRef.Tags}
 	}
 	return filters
 }
