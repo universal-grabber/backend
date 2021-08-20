@@ -66,12 +66,12 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 			pageLog.Debug("end request search")
 		}()
 
-		var buffer []*model.PageRef
+		var buffer []model.PageRef
 
 		for pageRef := range pageChan {
 			count++
 
-			buffer = append(buffer, pageRef)
+			buffer = append(buffer, *pageRef)
 
 			if len(buffer) >= 100000 {
 				pageLog.Info("starting flush %d out of %d", buffer, count)

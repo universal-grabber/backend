@@ -75,7 +75,7 @@ func (s *UgbKafka) GetWriter(topic string) *kafka.Writer {
 	return s.writerMap[topic]
 }
 
-func (s *UgbKafka) SendPageRef(list []*model.PageRef) error {
+func (s *UgbKafka) SendPageRef(list []model.PageRef) error {
 	var messagesMap = make(map[string][]kafka.Message)
 
 	for _, pageRef := range list {
@@ -167,6 +167,6 @@ func (s *UgbKafka) GetConsumerGroupStats(groupName string, topics []string) map[
 	return gen.Assignments
 }
 
-func locatePageRefTopic(ref *model.PageRef) string {
+func locatePageRefTopic(ref model.PageRef) string {
 	return "ug_" + ref.Data.Source + "_" + ref.Data.State + "_" + ref.Data.Status
 }

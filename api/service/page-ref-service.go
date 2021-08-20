@@ -196,7 +196,7 @@ func (service *PageRefService) PageRefExists(id uuid.UUID) bool {
 	return false
 }
 
-func (service *PageRefService) BulkWrite2(list []model.PageRef) {
+func (service *PageRefService) BulkWrite2(list []model.PageRef) []model.PageRef {
 	opLog := log.WithField("operation", "bulkWrite2")
 
 	col := helper.UgbMongoInstance.GetCollection(_const.UgbMongoDb, "pageRef")
@@ -242,6 +242,8 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return list
 }
 
 func (service *PageRefService) BulkInsert(list []model.PageRef) {

@@ -57,10 +57,10 @@ func (receiver PageRefGrpcService) Complete(_ context.Context, req *pb.PageRefLi
 }
 
 func (receiver PageRefGrpcService) Create(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
-	var items []*model.PageRef
+	var items []model.PageRef
 
 	for _, record := range req.List {
-		items = append(items, convertBasePageRef(record))
+		items = append(items, *convertBasePageRef(record))
 	}
 
 	receiver.service.BulkInsert(items)

@@ -21,14 +21,6 @@ func (service *PageRefKafkaService) Init() {
 	service.pageRefService = new(PageRefService)
 }
 
-func (service *PageRefKafkaService) BulkWrite2(list []model.PageRef) {
-
-}
-
-func (service *PageRefKafkaService) BulkInsert(list []*model.PageRef) {
-
-}
-
 func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []string, req *pb.PageRefFetchRequest, interruptChan chan bool) chan *model.PageRef {
 	requestId := rand.Intn(1000000)
 
@@ -120,7 +112,19 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 }
 
 func (service *PageRefKafkaService) Complete(list []model.PageRef) error {
-	service.pageRefService.BulkWrite2(list)
+	kafka := helper.UgbKafkaInstance
 
-	return nil
+	updated := service.pageRefService.BulkWrite2(list)
+
+	err := kafka.SendPageRef(updated)
+
+	if err != nil {
+		log.Error(err)
+	}
+
+	return err
+}
+
+func (service *PageRefKafkaService) BulkInsert(list []model.PageRef) {
+	service.pageRefService.BulkInsert(list)
 }
