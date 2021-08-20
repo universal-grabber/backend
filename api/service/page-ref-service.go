@@ -197,13 +197,15 @@ func (service *PageRefService) PageRefExists(id uuid.UUID) bool {
 }
 
 func (service *PageRefService) BulkWrite2(list []model.PageRef) {
+	opLog := log.WithField("operation", "bulkWrite2")
+
 	col := helper.UgbMongoInstance.GetCollection(_const.UgbMongoDb, "pageRef")
 
 	opts := new(options.BulkWriteOptions)
 	var models []mongo.WriteModel
 
 	for _, pageRef := range list {
-		helper.PageRefLogger(&pageRef, "bulk-insert").Debug("update page-ref")
+		opLog.Debug("update page-ref")
 
 		oldId := pageRef.Id
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
@@ -213,6 +215,8 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) {
 			writeModel.Filter = bson.M{"_id": oldId}
 
 			models = append(models, writeModel)
+
+			opLog.Debug("deleting dangling record1")
 			continue
 		}
 		if oldId.String() != pageRef.Id.String() {
@@ -221,6 +225,7 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) {
 			writeModel.Filter = bson.M{"_id": oldId}
 
 			models = append(models, writeModel)
+			opLog.Debug("deleting dangling record1")
 		}
 
 		writeModel := mongo.NewUpdateOneModel()
@@ -235,7 +240,7 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) {
 	_, err := col.BulkWrite(context.Background(), models, opts)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
