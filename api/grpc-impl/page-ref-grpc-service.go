@@ -41,15 +41,19 @@ func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.Pag
 }
 
 func (receiver PageRefGrpcService) Complete(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
-	var items []*model.PageRef
+	var items []model.PageRef
 
 	for _, record := range req.List {
-		items = append(items, convertBasePageRef(record))
+		items = append(items, *convertBasePageRef(record))
 	}
 
-	receiver.service.Complete(items)
+	err := receiver.service.Complete(items)
 
-	return new(base.Empty), nil
+	if err != nil {
+		log.Error(err)
+	}
+
+	return new(base.Empty), err
 }
 
 func (receiver PageRefGrpcService) Create(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {

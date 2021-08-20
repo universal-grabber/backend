@@ -119,6 +119,8 @@ func (service *PageRefKafkaService) Fetch(state base.PageRefState, websites []st
 	return pageChan
 }
 
-func (service *PageRefKafkaService) Complete(list []*model.PageRef) error {
+func (service *PageRefKafkaService) Complete(list []model.PageRef) error {
+	service.pageRefService.BulkWrite2(list)
+
 	return nil
 }
