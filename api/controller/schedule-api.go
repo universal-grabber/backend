@@ -81,6 +81,8 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 			// provision topic if we found it first time
 			if !contains(topics, pageRefTopic) && searchPageRef.Provision {
+				topics = append(topics, pageRefTopic)
+
 				err := kafka.ProvisionTopic(pageRefTopic)
 				if err != nil {
 					log.Error(err)
