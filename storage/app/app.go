@@ -224,7 +224,6 @@ func checkStoreResult(result *pb.StoreResult, pageRef *base.PageRef) {
 
 func (app *App) download(url string) []byte {
 	downloadUrl := "https://" + getDDHost() + "/get-clean?noProxy=true&url=" + url
-	log.Print("downloading via:", downloadUrl)
 
 	resp, err := app.downloaderClient.Get(downloadUrl)
 
