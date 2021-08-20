@@ -237,11 +237,13 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) []model.PageRef 
 		models = append(models, writeModel)
 	}
 
-	_, err := col.BulkWrite(context.Background(), models, opts)
+	res, err := col.BulkWrite(context.Background(), models, opts)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Infof("Bulk write result: WriteCount => %d; ModifiedCount => %d; ModifiedCount => %d; DeletedCount => %d; UpsertedCount => %d; ", len(models), res.ModifiedCount, res.InsertedCount, res.DeletedCount, res.UpsertedCount)
 
 	return list
 }
