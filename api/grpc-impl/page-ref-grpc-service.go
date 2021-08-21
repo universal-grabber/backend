@@ -11,6 +11,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	grpcMetricsRegistry = common.NewMeter("uga-grpc")
+)
+
 type PageRefGrpcService struct {
 	pb.UnimplementedPageRefServiceServer
 
@@ -22,12 +26,16 @@ func (receiver *PageRefGrpcService) Init() {
 }
 
 func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.PageRefService_FetchServer) error {
+	grpcMetricsRegistry.Inc("grpc-fetch-request", 1)
+
 	interruptChan := make(chan bool)
 
 	pageChan := receiver.service.Fetch(req.State, req.Websites, req, interruptChan)
 
 	for record := range pageChan {
 		err := res.Send(convertPageRef(record))
+		grpcMetricsRegistry.Inc("grpc-fetch-send", 1, record.Data.State, record.Data.Status)
+
 		if err != nil {
 			log.Error(err)
 
@@ -43,8 +51,11 @@ func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.Pag
 func (receiver PageRefGrpcService) Complete(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
 	var items []model.PageRef
 
+	grpcMetricsRegistry.Inc("grpc-complete-request", 1)
+
 	for _, record := range req.List {
 		items = append(items, *convertBasePageRef(record))
+		grpcMetricsRegistry.Inc("grpc-complete-receive", 1, record.State.String(), record.Status.String())
 	}
 
 	err := receiver.service.Complete(items)
