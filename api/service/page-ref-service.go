@@ -209,6 +209,7 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) []model.PageRef 
 
 		oldId := pageRef.Id
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
+		opLog.Tracef("pageRef configured to state: %s; status: %s", pageRef.Data.State, pageRef.Data.Status)
 		if util.Contains(*pageRef.Data.Tags, "delete") {
 			// delete dangling page-ref
 			writeModel := mongo.NewDeleteOneModel()
