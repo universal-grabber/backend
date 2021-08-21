@@ -31,28 +31,22 @@ func (m *meter) Inc(operation string, count int64, tags map[string]string) {
 
 		registry := metrics.NewRegistry()
 
-		if tags != nil {
-			go influxdb.InfluxDBWithTags(registry,
-				time.Second,
-				"http://ug.tisserv.net:8086",
-				"ug",
-				m.name,
-				"",
-				"",
-				tags,
-				true,
-			)
-		} else {
-			go influxdb.InfluxDB(registry,
-				time.Second,
-				"http://ug.tisserv.net:8086",
-				"ug",
-				m.name,
-				"",
-				"",
-				true,
-			)
+		if tags == nil {
+			tags = make(map[string]string)
 		}
+
+		tags["operation"] = operation
+
+		go influxdb.InfluxDBWithTags(registry,
+			time.Second,
+			"http://ug.tisserv.net:8086",
+			"ug",
+			m.name,
+			"",
+			"",
+			tags,
+			true,
+		)
 
 		err := registry.Register("value", c)
 
