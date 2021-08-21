@@ -204,12 +204,17 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) []model.PageRef 
 	opts := new(options.BulkWriteOptions)
 	var models []mongo.WriteModel
 
+	var result []model.PageRef
+
 	for _, pageRef := range list {
 		opLog.Debug("update page-ref")
 
 		oldId := pageRef.Id
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
 		opLog.Tracef("pageRef configured to state: %s; status: %s", pageRef.Data.State, pageRef.Data.Status)
+
+		result = append(result, pageRef)
+
 		if util.Contains(*pageRef.Data.Tags, "delete") {
 			// delete dangling page-ref
 			writeModel := mongo.NewDeleteOneModel()
@@ -246,7 +251,7 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) []model.PageRef 
 
 	log.Infof("Bulk write result: WriteCount => %d; ModifiedCount => %d; ModifiedCount => %d; DeletedCount => %d; UpsertedCount => %d; ", len(models), res.ModifiedCount, res.InsertedCount, res.DeletedCount, res.UpsertedCount)
 
-	return list
+	return result
 }
 
 func (service *PageRefService) BulkInsert(list []model.PageRef) {
