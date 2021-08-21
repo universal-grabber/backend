@@ -26,7 +26,7 @@ func (receiver *PageRefGrpcService) Init() {
 }
 
 func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.PageRefService_FetchServer) error {
-	grpcMetricsRegistry.Inc("grpc-fetch-request", 1)
+	grpcMetricsRegistry.Inc("grpc-fetch-request", 1, req.State.String())
 
 	interruptChan := make(chan bool)
 
