@@ -26,7 +26,9 @@ func (receiver *PageRefGrpcService) Init() {
 }
 
 func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.PageRefService_FetchServer) error {
-	grpcMetricsRegistry.Inc("grpc-fetch-request", 1, req.State.String())
+	grpcMetricsRegistry.Inc("grpc-fetch-request", 1, map[string]string{
+		"state": req.State.String(),
+	})
 
 	interruptChan := make(chan bool)
 
@@ -34,7 +36,7 @@ func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.Pag
 
 	for record := range pageChan {
 		err := res.Send(convertPageRef(record))
-		grpcMetricsRegistry.Inc("grpc-fetch-send", 1, record.Data.State, record.Data.Status)
+		grpcMetricsRegistry.Inc("grpc-fetch-send", 1, common.PageRefRecordToTags(*record))
 
 		if err != nil {
 			log.Error(err)
@@ -51,11 +53,11 @@ func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.Pag
 func (receiver PageRefGrpcService) Complete(_ context.Context, req *pb.PageRefList) (*base.Empty, error) {
 	var items []model.PageRef
 
-	grpcMetricsRegistry.Inc("grpc-complete-request", 1)
+	grpcMetricsRegistry.Inc("grpc-complete-request", 1, nil)
 
 	for _, record := range req.List {
 		items = append(items, *convertBasePageRef(record))
-		grpcMetricsRegistry.Inc("grpc-complete-receive", 1, record.State.String(), record.Status.String())
+		grpcMetricsRegistry.Inc("grpc-complete-receive", 1, common.PageRefRecordToTags2(*record))
 	}
 
 	err := receiver.service.Complete(items)

@@ -45,7 +45,7 @@ func (task *DownloadTask) Run() {
 func (task *DownloadTask) process(item *base.PageRef) *base.PageRef {
 	log.Tracef("page-ref received for download %s", item.Url)
 
-	downloadTaskMetricsRegistry.Inc("download-request", 1, nil)
+	downloadTaskMetricsRegistry.Inc("download-request", 1, common.PageRefRecordToTags2(*item))
 
 	result := task.clients.GetBackendStorageClient().Store(item)
 
@@ -55,7 +55,7 @@ func (task *DownloadTask) process(item *base.PageRef) *base.PageRef {
 		item.Status = base.PageRefStatus_FINISHED
 	}
 
-	downloadTaskMetricsRegistry.Inc("download-result-"+item.Status.String(), 1, nil)
+	downloadTaskMetricsRegistry.Inc("download-result", 1, common.PageRefRecordToTags2(*item))
 
 	return item
 }

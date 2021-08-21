@@ -75,7 +75,7 @@ func (task *ParseTask) Run() {
 func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 	log.Tracef("page-ref received for download %s", pageRef.Url)
 
-	parseTaskMetricsRegistry.Inc("parse-request", 1)
+	parseTaskMetricsRegistry.Inc("parse-request", 1, common.PageRefRecordToTags2(*pageRef))
 
 	result := task.clients.GetBackendStorageClient().Get(pageRef)
 
@@ -87,7 +87,7 @@ func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 		pageRef.Status = base.PageRefStatus_FAILED
 	}
 
-	parseTaskMetricsRegistry.Inc("parse-response-" + pageRef.Status.String(), 1)
+	parseTaskMetricsRegistry.Inc("parse-response", 1, common.PageRefRecordToTags2(*pageRef))
 
 	return pageRef
 }
