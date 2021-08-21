@@ -1,10 +1,15 @@
 package tasks
 
 import (
+	"backend/common"
 	"backend/gen/proto/base"
 	"backend/processor/client"
 	"backend/processor/lib"
 	log "github.com/sirupsen/logrus"
+)
+
+var (
+	downloadTaskMetricsRegistry = common.NewMeter("ugb-download-task")
 )
 
 type DownloadTask struct {
@@ -40,6 +45,8 @@ func (task *DownloadTask) Run() {
 func (task *DownloadTask) process(item *base.PageRef) *base.PageRef {
 	log.Tracef("page-ref received for download %s", item.Url)
 
+	downloadTaskMetricsRegistry.Inc("download-request", 1, nil)
+
 	result := task.clients.GetBackendStorageClient().Store(item)
 
 	if !result.Ok {
@@ -47,6 +54,8 @@ func (task *DownloadTask) process(item *base.PageRef) *base.PageRef {
 	} else {
 		item.Status = base.PageRefStatus_FINISHED
 	}
+
+	downloadTaskMetricsRegistry.Inc("download-result-"+item.Status.String(), 1, nil)
 
 	return item
 }

@@ -15,6 +15,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var (
+	parseTaskMetricsRegistry = common.NewMeter("ugb-parse-task")
+)
+
 type ParseTask struct {
 	clients     client.Clients
 	processor   lib.Processor
@@ -71,6 +75,8 @@ func (task *ParseTask) Run() {
 func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 	log.Tracef("page-ref received for download %s", pageRef.Url)
 
+	parseTaskMetricsRegistry.Inc("parse-request", 1)
+
 	result := task.clients.GetBackendStorageClient().Get(pageRef)
 
 	if result.Ok {
@@ -80,6 +86,8 @@ func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 			Warnf("could not get page-ref html")
 		pageRef.Status = base.PageRefStatus_FAILED
 	}
+
+	parseTaskMetricsRegistry.Inc("parse-response-" + pageRef.Status.String(), 1)
 
 	return pageRef
 }

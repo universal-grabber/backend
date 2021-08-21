@@ -77,6 +77,8 @@ func (task *PublishTask) process(pageRef *base.PageRef) *base.PageRef {
 
 	cur, err := task.pageDataCol.Find(context.TODO(), bson.M{"_id": pageRef.Id})
 
+	parseTaskMetricsRegistry.Inc("parse-request", 1)
+
 	lib.CheckWithPageRef(err, pageRef)
 
 	if cur.Next(context.TODO()) {
@@ -90,6 +92,8 @@ func (task *PublishTask) process(pageRef *base.PageRef) *base.PageRef {
 
 		pageRef.Status = base.PageRefStatus_FINISHED
 
+		parseTaskMetricsRegistry.Inc("parse-response-"+pageRef.Status.String(), 1)
+
 		return pageRef
 	} else {
 		common.PageRefLogger(pageRef, "publish-record-not-found").
@@ -97,6 +101,8 @@ func (task *PublishTask) process(pageRef *base.PageRef) *base.PageRef {
 	}
 
 	pageRef.Status = base.PageRefStatus_FAILED
+
+	parseTaskMetricsRegistry.Inc("parse-response-"+pageRef.Status.String(), 1)
 
 	common.PageRefLogger(pageRef, "finish-publish").
 		Trace("publish operation finished")
