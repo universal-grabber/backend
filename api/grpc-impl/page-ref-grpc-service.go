@@ -27,6 +27,7 @@ func (receiver *PageRefGrpcService) Init() {
 
 func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.PageRefService_FetchServer) error {
 	ctx, cancel := context.WithCancel(res.Context())
+	defer cancel()
 
 	ctx = common.WithLogger(ctx)
 	ctx = common.WithMeter(ctx, grpcMetricsRegistry)
@@ -48,9 +49,6 @@ func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.Pag
 			return err
 		}
 	}
-
-	// cancel operation after we finished
-	cancel()
 
 	return nil
 }

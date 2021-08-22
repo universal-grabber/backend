@@ -5,6 +5,7 @@ import (
 	"backend/api/helper"
 	"backend/api/model"
 	"backend/api/service"
+	"context"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
@@ -51,8 +52,9 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 	count := 0
 
 	go func() {
-		interruptChan := make(chan bool)
-		// search async
+
+		ctx, cancel := context.WithCancel(c.Request.Context())
+		defer cancel()
 
 		pageLog := opLog.WithField("page", searchPageRef.Page)
 
@@ -61,7 +63,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 		go func() {
 			pageLog.Debug("request search")
 
-			receiver.service.Search(c.Request.Context(), searchPageRef, pageChan)
+			receiver.service.Search(ctx, searchPageRef, pageChan)
 
 			pageLog.Debug("end request search")
 		}()
@@ -87,7 +89,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 				if err != nil {
 					log.Error(err)
 					c.Error(err)
-					interruptChan <- true
+					cancel()
 					return
 				}
 			}

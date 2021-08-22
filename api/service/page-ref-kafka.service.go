@@ -22,6 +22,7 @@ func (service *PageRefKafkaService) Init() {
 
 func (service *PageRefKafkaService) Fetch(ctx context.Context, state base.PageRefState, websites []string) chan *model.PageRef {
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	common.UseLogger(ctx).Debug("Fetch requested")
 	pageChan := make(chan *model.PageRef)
@@ -82,7 +83,7 @@ func (service *PageRefKafkaService) Fetch(ctx context.Context, state base.PageRe
 
 					if counter == 10000 {
 						cancel()
-						common.UseLogger(ctx).Debug("interrupt signal sent after max counter reached")
+						common.UseLogger(ctx).Debug("cancel signal sent after max counter reached")
 					}
 				}
 				common.UseLogger(ctx).Debug("request finished to fetch with topic: {}", localTopic)
