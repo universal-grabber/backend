@@ -39,7 +39,7 @@ func (client *ApiClient) Init(config model.Config) {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(config.UgbApiGrpcUri, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Errorf("did not connect: %v", err)
 	}
 
 	client.connection = conn
@@ -80,7 +80,8 @@ func (client *ApiClient) AcceptPages(state base.PageRefState) chan *base.PageRef
 				pageRefReadChannel <- item
 			}
 
-			time.Sleep(1 * time.Second)
+			// wait for one minute, as queue was empty
+			time.Sleep(60 * time.Second)
 		}
 	}()
 

@@ -23,7 +23,7 @@ func (client *BackendStorageClient) Init(config model.Config) {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(config.UgbStorageUri, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Errorf("did not connect: %v", err)
 	}
 
 	client.connection = conn
