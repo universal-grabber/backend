@@ -79,8 +79,8 @@ func (s *UgbKafka) SendPageRef(list []model.PageRef) error {
 	var messagesMap = make(map[string][]kafka.Message)
 
 	for _, pageRef := range list {
-		log.Tracef("not sending item to kafka as it is not in pending state %s / %s", pageRef.Id.String(), pageRef.Data.Status)
 		if pageRef.Data.Status != "PENDING" {
+			log.Tracef("not sending item to kafka as it is not in pending state %s / %s", pageRef.Id.String(), pageRef.Data.Status)
 			continue
 		}
 
