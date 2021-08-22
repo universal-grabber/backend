@@ -84,7 +84,13 @@ func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 	}
 
 	if result.Ok {
-		pageRef.Status = task.parseItem(result, pageRef)
+		err := task.parseItem(result, pageRef)
+		if err != nil {
+			log.Warnf("failed to parse pageRef %s / %s", pageRef.Id, err)
+			pageRef.Status = base.PageRefStatus_FAILED
+		} else {
+			pageRef.Status = base.PageRefStatus_FINISHED
+		}
 	} else {
 		common.PageRefLogger(pageRef, "fail-to-get-html").
 			Warnf("could not get page-ref html")
@@ -96,7 +102,7 @@ func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 	return pageRef
 }
 
-func (task *ParseTask) parseItem(result *pb.StoreResult, pageRef *base.PageRef) base.PageRefStatus {
+func (task *ParseTask) parseItem(result *pb.StoreResult, pageRef *base.PageRef) error {
 	common.PageRefLogger(pageRef, "start-parse").
 		Trace("starting parse process")
 
@@ -108,38 +114,28 @@ func (task *ParseTask) parseItem(result *pb.StoreResult, pageRef *base.PageRef) 
 	}()
 	parseResult := result.Content
 
-	res := task.clients.GetModelProcessorClient().Parse(parseResult, pageRef)
+	res, err := task.clients.GetModelProcessorClient().
+		Parse(parseResult, pageRef)
+
+	if err != nil {
+		return err
+	}
 
 	for _, tag := range pageRef.Tags {
 		res.Tags = append(res.Tags, tag)
-	}
-
-	if res == nil {
-		common.PageRefLogger(pageRef, "parse-html-could-not-get").
-			Trace("could not get html file")
-		return base.PageRefStatus_FAILED
 	}
 
 	pageData := new(model.PageData)
 	pageData.Id = pageRef.Id
 	pageData.Record = res
 
-	_, err := task.pageDataCol.DeleteOne(context.TODO(), bson.M{"_id": pageRef.Id})
+	_, err = task.pageDataCol.DeleteOne(context.TODO(), bson.M{"_id": pageRef.Id})
 
 	if err != nil {
-		lib.CheckWithPageRefLogOnly(err, pageRef)
-		return base.PageRefStatus_FAILED
+		return err
 	}
 
 	_, err = task.pageDataCol.InsertOne(context.TODO(), pageData)
 
-	if err != nil {
-		lib.CheckWithPageRefLogOnly(err, pageRef)
-		return base.PageRefStatus_FAILED
-	}
-
-	common.PageRefLogger(pageRef, "finish-parse").
-		Trace("finishing parse process")
-
-	return base.PageRefStatus_FINISHED
+	return err
 }

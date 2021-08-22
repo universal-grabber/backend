@@ -2,7 +2,6 @@ package client
 
 import (
 	"backend/gen/proto/base"
-	"backend/processor/lib"
 	"backend/processor/model"
 	"bytes"
 	"encoding/json"
@@ -19,33 +18,38 @@ func (client *ModelProcessorClient) Init(config model.Config) {
 	client.config = config
 }
 
-func (client *ModelProcessorClient) Parse(result string, pageRef *base.PageRef) *model.Record {
+func (client *ModelProcessorClient) Parse(result string, pageRef *base.PageRef) (*model.Record, error) {
 	processorData := model.ProcessDataLight{
-		Html: &result,
-		PageRef:  pageRef,
+		Html:    &result,
+		PageRef: pageRef,
 	}
 
 	data, err := json.Marshal(processorData)
 
-	lib.Check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	res, err := http.Post(client.config.UgbModelProcessorUri+"/api/1.0/parse-light", "application/json", bytes.NewReader(data))
 
-	lib.Check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	resBytes, err := ioutil.ReadAll(res.Body)
 
-	lib.Check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	record := new(model.Record)
 
 	err = json.Unmarshal(resBytes, record)
 
 	if res.StatusCode != 200 {
-		log.Panic("unable to parse", string(resBytes))
+		log.Error("unable to parse", string(resBytes))
+		return nil, err
 	}
 
-	lib.Check(err)
-
-	return record
+	return record, err
 }
