@@ -239,11 +239,9 @@ func (service *PageRefService) BulkWrite(list []model.PageRef) []model.PageRef {
 		*writeModel.Upsert = false
 		writeModel.Filter = bson.M{"_id": pageRef.Id}
 		writeModel.Update = bson.M{"$set": bson.M{
-			"data": bson.M{
-				"state":   pageRef.Data.State,
-				"status":  pageRef.Data.Status,
-				"options": pageRef.Data.Options,
-			},
+			"data.state":   pageRef.Data.State,
+			"data.status":  pageRef.Data.Status,
+			"data.options": pageRef.Data.Options,
 		}}
 
 		models = append(models, writeModel)
