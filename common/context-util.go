@@ -49,7 +49,7 @@ func UseLogger(parent context.Context) *log.Entry {
 	logger := parent.Value(loggerKey)
 
 	if logger == nil {
-		log.Fatal("logger is not found in context")
+		log.Error("logger is not found in context")
 		logger = log.WithContext(context.TODO())
 	}
 

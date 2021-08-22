@@ -58,7 +58,7 @@ func initApiServices(*cli.Context) ApiServices {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial("127.0.0.1:6565", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Errorf("did not connect: %v", err)
 	}
 
 	return ApiServices{

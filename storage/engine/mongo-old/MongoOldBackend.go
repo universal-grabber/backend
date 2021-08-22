@@ -26,7 +26,7 @@ func (storage *SimpleMongoBackend) Get(id uuid.UUID) ([]byte, error) {
 		pageHtml := new(SimplePageHtml)
 
 		if err = cur.Decode(pageHtml); err != nil {
-			log.Fatal(err)
+			log.Error(err)
 		}
 
 		return []byte(pageHtml.Content), nil

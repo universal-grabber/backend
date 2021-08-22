@@ -17,7 +17,7 @@ func (client *ApiClient) Init(config model.Config) {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial("10.0.1.77:30004", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Errorf("did not connect: %v", err)
 	}
 
 	client.connection = conn

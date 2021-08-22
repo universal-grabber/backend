@@ -13,7 +13,7 @@ func main() {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial("kube.tisserv.net:30004", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Errorf("did not connect: %v", err)
 	}
 
 	pageServiceClient := pb.NewPageRefServiceClient(conn)

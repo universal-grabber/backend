@@ -14,6 +14,6 @@ func main() {
 	log.Info("info1")
 	log.Warn("warning1")
 	log.Error("error1")
-	log.Fatal("fatal1")
+	log.Error("fatal1")
 	log.Panic("panic1")
 }

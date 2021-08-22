@@ -42,14 +42,14 @@ func (app *App) runGrpc() {
 	lis, err := net.Listen("tcp", "0.0.0.0:6565")
 
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Errorf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 
 	pb.RegisterStorageServiceServer(s, app)
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Errorf("failed to serve: %v", err)
 	}
 
 }
