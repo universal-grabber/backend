@@ -22,7 +22,6 @@ func (service *PageRefKafkaService) Init() {
 
 func (service *PageRefKafkaService) Fetch(ctx context.Context, state base.PageRefState, websites []string) chan *model.PageRef {
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	common.UseLogger(ctx).Debug("Fetch requested")
 	pageChan := make(chan *model.PageRef)
