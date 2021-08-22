@@ -236,7 +236,7 @@ func (service *PageRefService) BulkWrite(list []model.PageRef) []model.PageRef {
 
 		writeModel := mongo.NewUpdateOneModel()
 		writeModel.Upsert = new(bool)
-		*writeModel.Upsert = true
+		*writeModel.Upsert = false
 		writeModel.Filter = bson.M{"_id": pageRef.Id}
 		writeModel.Update = bson.M{"$set": bson.M{
 			"data": bson.M{
