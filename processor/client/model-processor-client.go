@@ -1,6 +1,7 @@
 package client
 
 import (
+	"backend/gen/proto/base"
 	"backend/processor/lib"
 	"backend/processor/model"
 	"bytes"
@@ -18,10 +19,10 @@ func (client *ModelProcessorClient) Init(config model.Config) {
 	client.config = config
 }
 
-func (client *ModelProcessorClient) Parse(result string, url string) *model.Record {
+func (client *ModelProcessorClient) Parse(result string, pageRef *base.PageRef) *model.Record {
 	processorData := model.ProcessDataLight{
 		Html: &result,
-		Url:  &url,
+		PageRef:  pageRef,
 	}
 
 	data, err := json.Marshal(processorData)

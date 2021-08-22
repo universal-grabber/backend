@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"log"
 	"net/http"
+	"reflect"
 )
 import "github.com/gin-gonic/gin"
 
@@ -77,6 +78,21 @@ func (app *App) parseLight(c *gin.Context) {
 
 	data, err := app.locate.PrepareProcessData(p)
 
+	errorType := reflect.TypeOf(err)
+
+	if err != nil && errorType.String() == "*model.Error" && err.(*model.Error).ErrorType == "not-found" {
+		result, err := app.staticParse(p)
+
+		if err != nil {
+			c.JSON(400, c.Error(err))
+			return
+		}
+
+		c.JSON(200, result)
+
+		return
+	}
+
 	if err != nil {
 		c.JSON(400, c.Error(err))
 		return
@@ -139,6 +155,19 @@ func (app *App) markers(c *gin.Context) {
 	}
 
 	c.JSON(200, result)
+}
+
+func (app *App) staticParse(p model.ProcessDataLight) (*model.Record, error) {
+	if *p.Html == "" {
+		return nil, model.Error{
+			Message:   "html is empty",
+			ErrorType: "no-html",
+		}
+	}
+
+	parser := new(lib.Parser)
+
+	return parser.ParseStaticData(p)
 }
 
 func check(err error) {

@@ -143,8 +143,11 @@ func (s *SchedulerServiceImpl) ConfigureNextTask(ref *model.PageRef) {
 		ref.Data.State = "PARSE"
 		ref.Data.Status = "PENDING"
 	} else if ref.Data.State == "PARSE" {
+		//ref.Data.State = "PUBLISH"
+		//ref.Data.Status = "PENDING"
+
 		ref.Data.State = "PUBLISH"
-		ref.Data.Status = "PENDING"
+		ref.Data.Status = "FINISHED"
 	}
 
 	helper.PageRefLogger(ref, "proceed-next-task").Debugf("proceeding to next task from %s", oldState)

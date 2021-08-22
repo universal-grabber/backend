@@ -15,7 +15,7 @@ type Locate struct {
 	schemas []model.Schema
 }
 
-func (l Locate) LocateModel(url *string, models []model.Model) (*model.Model, error) {
+func (l Locate) LocateModel(url *string, models []model.Model) (*model.Model, *model.Error) {
 	for _, m := range models {
 		if m.UrlCheck == "" {
 			continue
@@ -27,19 +27,20 @@ func (l Locate) LocateModel(url *string, models []model.Model) (*model.Model, er
 		}
 	}
 
-	return nil, model.Error{
+	return nil, &model.Error{
 		Message: "model not found for url " + *url,
+		ErrorType: "not-found",
 	}
 }
 
-func (l Locate) LocateSchema(schemaName string) (*model.Schema, error) {
+func (l Locate) LocateSchema(schemaName string) (*model.Schema, *model.Error) {
 	for _, schema := range l.schemas {
 		if schema.Name == schemaName {
 			return &schema, nil
 		}
 	}
 
-	return nil, model.Error{
+	return nil, &model.Error{
 		Message: "schema not found for name " + schemaName,
 	}
 }
@@ -72,7 +73,7 @@ func (l *Locate) reload() {
 	log.Printf("loaded %d / %d", len(l.models), len(l.schemas))
 }
 func (l *Locate) PrepareProcessData(p model.ProcessDataLight) (*model.ProcessData, error) {
-	modelItem, err := l.LocateModel(p.Url, l.models)
+	modelItem, err := l.LocateModel(&p.PageRef.Url, l.models)
 
 	if err != nil {
 		return nil, err
@@ -85,7 +86,7 @@ func (l *Locate) PrepareProcessData(p model.ProcessDataLight) (*model.ProcessDat
 	}
 
 	processData := new(model.ProcessData)
-	processData.Url = p.Url
+	processData.Url = &p.PageRef.Url
 	processData.Html = p.Html
 	processData.Schema = schema
 	processData.Model = modelItem

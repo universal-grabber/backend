@@ -79,6 +79,10 @@ func (task *ParseTask) process(pageRef *base.PageRef) *base.PageRef {
 
 	result := task.clients.GetBackendStorageClient().Get(pageRef)
 
+	if pageRef.Status != base.PageRefStatus_FINISHED {
+		pageRef.Status = base.PageRefStatus_FAILED
+	}
+
 	if result.Ok {
 		pageRef.Status = task.parseItem(result, pageRef)
 	} else {
@@ -100,12 +104,11 @@ func (task *ParseTask) parseItem(result *pb.StoreResult, pageRef *base.PageRef) 
 		if r := recover(); r != nil {
 			common.PageRefLogger(pageRef, "parse-panic").
 				Errorf("panicing parse: %s", r)
-			pageRef.Status = base.PageRefStatus_FAILED
 		}
 	}()
 	parseResult := result.Content
 
-	res := task.clients.GetModelProcessorClient().Parse(parseResult, pageRef.Url)
+	res := task.clients.GetModelProcessorClient().Parse(parseResult, pageRef)
 
 	for _, tag := range pageRef.Tags {
 		res.Tags = append(res.Tags, tag)
