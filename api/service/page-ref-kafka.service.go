@@ -21,7 +21,7 @@ func (service *PageRefKafkaService) Init() {
 }
 
 func (service *PageRefKafkaService) Fetch(ctx context.Context, state base.PageRefState, websites []string) chan *model.PageRef {
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 
 	common.UseLogger(ctx).Debug("Fetch requested")
 	pageChan := make(chan *model.PageRef)
@@ -54,11 +54,12 @@ func (service *PageRefKafkaService) Fetch(ctx context.Context, state base.PageRe
 			localPageChan := kafka.RecvPageRef(ctx, topic, "FetchGroup")
 			common.UseLogger(ctx).Debug("request accepted by kafka to fetch with topic: {}", topic)
 
+			//@todo refactor, redirect chan
 			localTopic := topic
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
-						common.UseLogger(ctx).Fatal("Panic: %+v\n", r)
+						common.UseLogger(ctx).Error("Panic: %+v\n", r)
 					}
 				}()
 
@@ -74,15 +75,6 @@ func (service *PageRefKafkaService) Fetch(ctx context.Context, state base.PageRe
 						counter++
 						pageChan <- pageRef
 						common.UseLogger(ctx).Tracef("accepted item: %s", pageRef.Id)
-					case <-time.After(60 * time.Second):
-						cancel()
-						common.UseLogger(ctx).Infof("timeout on topic: %s", localTopic)
-						break MainLoop
-					}
-
-					if counter == 10000 {
-						cancel()
-						common.UseLogger(ctx).Debug("cancel signal sent after max counter reached")
 					}
 				}
 				common.UseLogger(ctx).Debug("request finished to fetch with topic: {}", localTopic)
