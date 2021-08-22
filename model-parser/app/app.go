@@ -25,7 +25,9 @@ func (app *App) Run() {
 
 	app.locate.Init()
 
-	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+
+	r := gin.New()
 
 	app.routes(r)
 

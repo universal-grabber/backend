@@ -96,14 +96,28 @@ func (parser Parser) ExtractMeta(onlyUgField bool) model.RecordMeta {
 	metaFields := parser.document.Find(selector)
 
 	for _, metaField := range metaFields {
-		key := metaField.Attr("ug-field")
-		value := metaField.Attr("ug-value")
+		if onlyUgField {
+			key := metaField.Attr("ug-field")
+			value := metaField.Attr("ug-value")
 
-		if strings.HasPrefix(key, "meta.") {
-			key = key[len("meta."):]
+			if strings.HasPrefix(key, "meta.") {
+				key = key[len("meta."):]
+			}
+
+			metaData[key] = value
+		} else {
+			key := strings.TrimSpace(metaField.Attr("name"))
+
+			if key == "" {
+				key = strings.TrimSpace(metaField.Attr("property"))
+			}
+
+			content := strings.TrimSpace(metaField.Attr("content"))
+
+			if key != "" && content != "" {
+				metaData[key] = content
+			}
 		}
-
-		metaData[key] = value
 	}
 
 	return metaData
@@ -282,6 +296,13 @@ func (parser *Parser) ParseStaticData(p model.ProcessDataLight) (*model.Record, 
 	record.Data = parser.ExtractLinks()
 	record.Data["title"] = parser.getText("title")
 
+	if len(record.Meta) == 0 && len(record.Data) == 0 {
+		return nil, model.Error{
+			Message:   "no data indicated after static parsing finished",
+			ErrorType: "no-data-found",
+		}
+	}
+
 	return record, nil
 }
 
@@ -307,7 +328,9 @@ func (parser *Parser) ExtractLinks() model.RecordData {
 		})
 	}
 
-	data["links"] = links
+	if len(links) > 0 {
+		data["links"] = links
+	}
 
 	return data
 }
