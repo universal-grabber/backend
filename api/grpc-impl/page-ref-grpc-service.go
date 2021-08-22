@@ -26,26 +26,31 @@ func (receiver *PageRefGrpcService) Init() {
 }
 
 func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.PageRefService_FetchServer) error {
-	grpcMetricsRegistry.Inc("grpc-fetch-request", 1, map[string]string{
+	ctx, cancel := context.WithCancel(res.Context())
+
+	ctx = common.WithLogger(ctx)
+	ctx = common.WithMeter(ctx, grpcMetricsRegistry)
+
+	common.UseMeter(ctx).Inc("grpc-fetch-request", 1, map[string]string{
 		"state": req.State.String(),
 	})
 
-	interruptChan := make(chan bool)
-
-	pageChan := receiver.service.Fetch(req.State, req.Websites, req, interruptChan)
+	pageChan := receiver.service.Fetch(ctx, req.State, req.Websites)
 
 	for record := range pageChan {
 		err := res.Send(convertPageRef(record))
-		grpcMetricsRegistry.Inc("grpc-fetch-send", 1, common.PageRefRecordToTags(*record))
+		common.UseMeter(ctx).Inc("grpc-fetch-send", 1, common.PageRefRecordToTags(*record))
 
 		if err != nil {
 			log.Error(err)
 
-			interruptChan <- false
-
+			cancel()
 			return err
 		}
 	}
+
+	// cancel operation after we finished
+	cancel()
 
 	return nil
 }

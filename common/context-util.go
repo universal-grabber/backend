@@ -1,11 +1,13 @@
-package context_util
+package common
 
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 )
 
 const loggerKey = "logger"
+const meterKey = "meter"
 
 type LoggerContext struct {
 	context.Context
@@ -13,7 +15,15 @@ type LoggerContext struct {
 
 func WithLogger(parent context.Context) context.Context {
 	if parent.Value(loggerKey) == nil {
-		return context.WithValue(parent, loggerKey, log.WithContext(parent))
+		return context.WithValue(parent, loggerKey, log.WithContext(parent).WithField("trackId", rand.Intn(1000000)))
+	}
+
+	return parent
+}
+
+func WithMeter(parent context.Context, meter Meter) context.Context {
+	if parent.Value(meterKey) == nil {
+		return context.WithValue(parent, meterKey, meter)
 	}
 
 	return parent
@@ -37,4 +47,8 @@ func WithOperation(parent context.Context, operation string) context.Context {
 
 func UseLogger(parent context.Context) *log.Entry {
 	return parent.Value(loggerKey).(*log.Entry)
+}
+
+func UseMeter(parent context.Context) Meter {
+	return parent.Value(meterKey).(Meter)
 }

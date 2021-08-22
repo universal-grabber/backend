@@ -61,7 +61,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 		go func() {
 			pageLog.Debug("request search")
 
-			receiver.service.Search(searchPageRef, pageChan, interruptChan)
+			receiver.service.Search(c.Request.Context(), searchPageRef, pageChan)
 
 			pageLog.Debug("end request search")
 		}()

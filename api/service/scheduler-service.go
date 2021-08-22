@@ -324,7 +324,7 @@ func (s *SchedulerServiceImpl) reconfigureEntryPoints(website *model.WebSite) {
 	}
 
 	if len(list) > 0 {
-		s.service.BulkWrite2(list)
+		s.service.BulkWrite(list)
 	}
 }
 
@@ -335,11 +335,9 @@ func (s *SchedulerServiceImpl) runScheduler(website *model.WebSite) {
 }
 
 func (s *SchedulerServiceImpl) runScheduleOnWebsite(website *model.WebSite, schedule model.WebsiteSchedule) {
-	var interruptChan <-chan bool
-
 	schedule.Match.WebsiteName = website.Name
 
-	pageChan, updateChan := s.service.UpdateStatesBulk2(schedule.Match, schedule.ToState, schedule.ToStatus, interruptChan)
+	pageChan, updateChan := s.service.UpdateStatesBulk2(context.TODO(), schedule.Match, schedule.ToState, schedule.ToStatus)
 	defer close(updateChan)
 
 	for pageRef := range pageChan {

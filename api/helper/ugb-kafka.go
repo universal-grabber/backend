@@ -114,7 +114,7 @@ func (s *UgbKafka) SendPageRef(list []model.PageRef) error {
 	return nil
 }
 
-func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan bool) <-chan *model.PageRef {
+func (s *UgbKafka) RecvPageRef(context context.Context, topic string, group string) <-chan *model.PageRef {
 	pageChan := make(chan *model.PageRef, 1000)
 
 	r := s.getReader(topic, group)
@@ -125,13 +125,7 @@ func (s *UgbKafka) RecvPageRef(topic string, group string, interruptChan <-chan 
 			r.Close()
 		}()
 		for {
-			select {
-			case <-interruptChan:
-				log.Print("Stopping receiving items as client disconnected\n")
-				return
-			default:
-			}
-			msg, err := r.ReadMessage(context.Background())
+			msg, err := r.ReadMessage(context)
 
 			if err != nil {
 				log.Error(err)

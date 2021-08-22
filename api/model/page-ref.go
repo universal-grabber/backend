@@ -9,9 +9,10 @@ type PageRef struct {
 }
 
 type PageRefData struct {
-	Source string    `bson:"websiteName" json:"websiteName"`
-	Url    string    `json:"url"`
-	State  string    `json:"state"`
-	Status string    `json:"status"`
-	Tags   *[]string `bson:"tags" json:"tags"`
+	Source  string      `bson:"websiteName" json:"websiteName"`
+	Url     string      `json:"url"`
+	State   string      `json:"state"`
+	Status  string      `json:"status"`
+	Tags    *[]string   `bson:"tags" json:"tags"`
+	Options interface{} `bson:"options" json:"options"`
 }

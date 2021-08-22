@@ -4,12 +4,17 @@ import (
 	"backend/api/helper"
 	"backend/api/model"
 	"backend/api/service"
+	"backend/common"
 	"github.com/gin-gonic/gin"
 )
 
 type PageRefApiImpl struct {
 	service *service.PageRefService
 }
+
+var (
+	pageRefApiListMeter = common.NewMeter("uga-page-ref-api-list")
+)
 
 func (receiver *PageRefApiImpl) Init() {
 	receiver.service = new(service.PageRefService)
@@ -21,21 +26,27 @@ func (receiver *PageRefApiImpl) RegisterRoutes(r *gin.Engine) {
 }
 
 func (receiver *PageRefApiImpl) List(c *gin.Context) {
-	timeCalc := new(helper.TimeCalc)
-	timeCalc.Init("pageRefApiList")
+	ctx := common.WithLogger(c.Request.Context())
+	ctx = common.WithMeter(ctx, pageRefApiListMeter)
 
 	searchPageRef := new(model.SearchPageRef)
 	err := helper.ParseRequestQuery(c.Request, searchPageRef)
 
 	if err != nil {
-		panic(err)
+		common.UseLogger(ctx).Error(err)
+		return
 	}
+
+	common.UseMeter(ctx).Inc("list-request", 1, map[string]string{
+		"state":  searchPageRef.State,
+		"status": searchPageRef.Status,
+	})
 
 	pageChan := make(chan *model.PageRef, 100)
 
 	// search async
 	go func() {
-		receiver.service.Search(searchPageRef, pageChan, c.Writer.CloseNotify())
+		receiver.service.Search(ctx, searchPageRef, pageChan)
 	}()
 
 	c.String(200, "[\n")
@@ -67,7 +78,7 @@ func (receiver *PageRefApiImpl) ListUrls(c *gin.Context) {
 
 	// search async
 	go func() {
-		receiver.service.Search(searchPageRef, pageChan, c.Writer.CloseNotify())
+		receiver.service.Search(c.Request.Context(), searchPageRef, pageChan)
 	}()
 
 	for pageRef := range pageChan {
@@ -98,7 +109,7 @@ func (receiver *PageRefApiImpl) UpdateStatesBulk(c *gin.Context) {
 		panic("toStatus is missing")
 	}
 
-	pageChan, updateChan := receiver.service.UpdateStatesBulk2(searchPageRef, toState, toStatus, c.Writer.CloseNotify())
+	pageChan, updateChan := receiver.service.UpdateStatesBulk2(c.Request.Context(), searchPageRef, toState, toStatus)
 
 	defer close(updateChan)
 
@@ -127,7 +138,7 @@ func (receiver *PageRefApiImpl) BulkUpsert(c *gin.Context) {
 
 	c.BindJSON(&list)
 
-	receiver.service.BulkWrite2(list)
+	receiver.service.BulkWrite(list)
 }
 
 func (receiver *PageRefApiImpl) BulkInsert(c *gin.Context) {

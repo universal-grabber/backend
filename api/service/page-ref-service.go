@@ -18,7 +18,7 @@ import (
 type PageRefService struct {
 }
 
-func (service *PageRefService) Search(searchPageRef *model.SearchPageRef, pageChan chan *model.PageRef, interruptChan <-chan bool) {
+func (service *PageRefService) Search(context context.Context, searchPageRef *model.SearchPageRef, pageChan chan *model.PageRef) {
 	db := helper.UgbMongoInstance
 	opts := new(options.FindOptions)
 	opts.Limit = new(int64)
@@ -34,7 +34,7 @@ func (service *PageRefService) Search(searchPageRef *model.SearchPageRef, pageCh
 	}
 
 	if !searchPageRef.FairSearch {
-		websitePageChan := util.SearchByFilter(db, util.PrepareFilter(searchPageRef), interruptChan, opts)
+		websitePageChan := util.SearchByFilter(context, db, util.PrepareFilter(searchPageRef), opts)
 		util.RedirectChan(pageChan, websitePageChan)
 	} else {
 		websites := util.ListWebsites(db)
@@ -44,7 +44,7 @@ func (service *PageRefService) Search(searchPageRef *model.SearchPageRef, pageCh
 
 			filters := util.PrepareFilter(searchPageRef)
 			filters["data.websiteName"] = website.Name
-			chanArr = append(chanArr, util.SearchByFilter(db, filters, interruptChan, opts))
+			chanArr = append(chanArr, util.SearchByFilter(context, db, filters, opts))
 		}
 
 		isFound := true
@@ -117,7 +117,7 @@ func (service *PageRefService) flushUpdate(col *mongo.Collection, buffer []uuid.
 	}
 }
 
-func (service *PageRefService) UpdateStatesBulk2(searchPageRef *model.SearchPageRef, toState string, toStatus string, interruptChan <-chan bool) (chan *model.PageRef, chan *model.PageRef) {
+func (service *PageRefService) UpdateStatesBulk2(context context.Context, searchPageRef *model.SearchPageRef, toState string, toStatus string) (chan *model.PageRef, chan *model.PageRef) {
 	timeCalc := new(helper.TimeCalc)
 	timeCalc.Init("pageRefApiList")
 
@@ -133,7 +133,7 @@ func (service *PageRefService) UpdateStatesBulk2(searchPageRef *model.SearchPage
 
 	// search async
 	go func() {
-		service.Search(searchPageRef, pageChan, interruptChan)
+		service.Search(context, searchPageRef, pageChan)
 	}()
 
 	updateChan := make(chan *model.PageRef, 100)
@@ -196,7 +196,7 @@ func (service *PageRefService) PageRefExists(id uuid.UUID) bool {
 	return false
 }
 
-func (service *PageRefService) BulkWrite2(list []model.PageRef) []model.PageRef {
+func (service *PageRefService) BulkWrite(list []model.PageRef) []model.PageRef {
 	opLog := log.WithField("operation", "bulkWrite2")
 
 	col := helper.UgbMongoInstance.GetCollection(_const.UgbMongoDb, "pageRef")
@@ -238,7 +238,13 @@ func (service *PageRefService) BulkWrite2(list []model.PageRef) []model.PageRef 
 		writeModel.Upsert = new(bool)
 		*writeModel.Upsert = true
 		writeModel.Filter = bson.M{"_id": pageRef.Id}
-		writeModel.Update = bson.M{"$set": pageRef}
+		writeModel.Update = bson.M{"$set": bson.M{
+			"data": bson.M{
+				"state":   pageRef.Data.State,
+				"status":  pageRef.Data.Status,
+				"options": pageRef.Data.Options,
+			},
+		}}
 
 		models = append(models, writeModel)
 	}

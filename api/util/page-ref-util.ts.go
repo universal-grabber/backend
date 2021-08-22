@@ -66,7 +66,7 @@ func ListWebsites(db *helper.UgbMongo) []model.WebSite {
 	return list
 }
 
-func SearchByFilter(db *helper.UgbMongo, filters bson.M, interruptChan <-chan bool, opts *options.FindOptions) chan *model.PageRef {
+func SearchByFilter(ctx context.Context, db *helper.UgbMongo, filters bson.M, opts *options.FindOptions) chan *model.PageRef {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("panicing searchByFilter: %s", r)
@@ -80,19 +80,13 @@ func SearchByFilter(db *helper.UgbMongo, filters bson.M, interruptChan <-chan bo
 			close(pageChan)
 		}()
 
-		cursor, err := db.GetCollection(_const.UgbMongoDb, "pageRef").Find(context.Background(), filters, opts)
+		cursor, err := db.GetCollection(_const.UgbMongoDb, "pageRef").Find(ctx, filters, opts)
 
 		if err != nil {
 			panic(err)
 		}
 
-		for cursor.Next(context.Background()) {
-			select {
-			case <-interruptChan:
-				log.Print("Stopping receiving items as client disconnected\n")
-				return
-			default:
-			}
+		for cursor.Next(ctx) {
 			pageRef := new(model.PageRef)
 
 			err := bson.UnmarshalWithRegistry(helper.MongoRegistry, cursor.Current, pageRef)
