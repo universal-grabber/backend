@@ -255,7 +255,7 @@ func (service *PageRefService) BulkWrite(list []model.PageRef) []model.PageRef {
 		log.Error(err)
 	}
 
-	log.Infof("Bulk write result: WriteCount => %d; ModifiedCount => %d; ModifiedCount => %d; DeletedCount => %d; UpsertedCount => %d; ", len(models), res.ModifiedCount, res.InsertedCount, res.DeletedCount, res.UpsertedCount)
+	log.Infof("Bulk write result: WriteCount => %d; MatchedCount => %d; ModifiedCount => %d; InsertedCount => %d; DeletedCount => %d; UpsertedCount => %d; ", len(models), res.MatchedCount, res.ModifiedCount, res.InsertedCount, res.DeletedCount, res.UpsertedCount)
 
 	return result
 }
