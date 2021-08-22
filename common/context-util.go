@@ -46,7 +46,14 @@ func WithOperation(parent context.Context, operation string) context.Context {
 }
 
 func UseLogger(parent context.Context) *log.Entry {
-	return parent.Value(loggerKey).(*log.Entry)
+	logger := parent.Value(loggerKey)
+
+	if logger == nil {
+		log.Fatal("logger is not found in context")
+		logger = log.WithContext(context.TODO())
+	}
+
+	return logger.(*log.Entry)
 }
 
 func UseMeter(parent context.Context) Meter {

@@ -4,6 +4,7 @@ import (
 	_const "backend/api/const"
 	"backend/api/helper"
 	"backend/api/model"
+	"backend/common"
 	"context"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -101,7 +102,7 @@ func SearchByFilter(ctx context.Context, db *helper.UgbMongo, filters bson.M, op
 		err = cursor.Close(context.TODO())
 
 		if err != nil {
-			panic(err)
+			common.UseLogger(ctx).Error(err)
 		}
 	}()
 
