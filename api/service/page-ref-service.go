@@ -159,7 +159,7 @@ func (service *PageRefService) pageRefExistsMultiViaUrl(urls []string) []string 
 
 	ctx := context.Background()
 
-	defer cursor.Close(ctx)
+	defer cursor.Close(context.TODO())
 
 	var existingUrls = append([]string{}, "dummy-url")
 
@@ -187,7 +187,7 @@ func (service *PageRefService) PageRefExists(id uuid.UUID) bool {
 
 	ctx := context.Background()
 
-	defer cursor.Close(ctx)
+	defer cursor.Close(context.TODO())
 
 	for cursor.Next(ctx) {
 		return true
