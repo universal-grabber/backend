@@ -132,7 +132,6 @@ func (s *SchedulerServiceImpl) ConfigurePageRef(pageRef *model.PageRef) {
 }
 
 func (s *SchedulerServiceImpl) ConfigureNextTask(ref *model.PageRef) {
-	oldState := ref.Data.State
 	if util.Contains(*ref.Data.Tags, "deep-scan") && ref.Data.State == "DOWNLOAD" {
 		ref.Data.State = "DEEP_SCAN"
 		ref.Data.Status = "PENDING"
@@ -149,8 +148,6 @@ func (s *SchedulerServiceImpl) ConfigureNextTask(ref *model.PageRef) {
 		ref.Data.State = "PUBLISH"
 		ref.Data.Status = "FINISHED"
 	}
-
-	helper.PageRefLogger(ref, "proceed-next-task").Debugf("proceeding to next task from %s", oldState)
 }
 
 func (s *SchedulerServiceImpl) ConfigurePageUrl(pageRef *model.PageRef) {

@@ -207,8 +207,6 @@ func (service *PageRefService) BulkWrite(list []model.PageRef) []model.PageRef {
 	var result []model.PageRef
 
 	for _, pageRef := range list {
-		opLog.Debug("update page-ref")
-
 		oldId := pageRef.Id
 		context2.GetSchedulerService().ConfigurePageRef(&pageRef)
 		opLog.Tracef("pageRef with Id %s; configured to state: %s; status: %s", pageRef.Id.String(), pageRef.Data.State, pageRef.Data.Status)
