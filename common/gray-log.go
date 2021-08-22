@@ -7,10 +7,10 @@ import (
 
 func EnableGrayLog(service string) {
 	log.SetReportCaller(true)
-	log.SetLevel(log.TraceLevel)
+	log.SetLevel(log.DebugLevel)
 
 	hook := graylog.NewAsyncGraylogHook("ug.tisserv.net:12201", map[string]interface{}{"service": service})
-	hook.Level = log.TraceLevel
+	hook.Level = log.DebugLevel
 	hook.Writer().CompressionType = 0
 	hook.Writer().CompressionLevel = 9
 
