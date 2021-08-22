@@ -6,6 +6,7 @@ import (
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	influxdb "github.com/vrischmann/go-metrics-influxdb"
+	"sync"
 	"time"
 )
 
@@ -14,19 +15,25 @@ type Meter interface {
 }
 
 type meter struct {
-	counters map[string]metrics.Counter
-	name     string
+	counters         map[string]metrics.Counter
+	name             string
+	counterSyncMutex sync.RWMutex
 }
 
 func (m *meter) Init(name string) {
 	m.counters = make(map[string]metrics.Counter)
 	m.name = name
+	m.counterSyncMutex = sync.RWMutex{}
 }
 
 func (m *meter) Inc(operation string, count int64, tags map[string]string) {
 	key := operation + ":" + createKeyValuePairs(tags)
 
-	if m.counters[key] == nil {
+	m.counterSyncMutex.RLock()
+	existingCounter := m.counters[key]
+	m.counterSyncMutex.RUnlock()
+
+	if existingCounter == nil {
 		c := metrics.NewCounter()
 
 		registry := metrics.NewRegistry()
@@ -54,10 +61,14 @@ func (m *meter) Inc(operation string, count int64, tags map[string]string) {
 			log.Error(err)
 		}
 
+		m.counterSyncMutex.Lock()
 		m.counters[key] = c
+		m.counterSyncMutex.Unlock()
 	}
 
+	m.counterSyncMutex.RLock()
 	m.counters[key].Inc(count)
+	m.counterSyncMutex.RUnlock()
 }
 
 func NewMeter(name string) Meter {
