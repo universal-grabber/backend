@@ -9,8 +9,6 @@ func main() {
 	common.Init("model-parser")
 	app := new(appPackage.App)
 
-	common.Init("model-processor")
-
 	app.Addr = ":8443"
 
 	app.CertFile = "server.crt"
