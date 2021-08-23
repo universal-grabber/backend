@@ -7,12 +7,25 @@ import (
 	"backend/gen/proto/base"
 	pb "backend/gen/proto/service/api"
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
 	grpcMetricsRegistry = common.NewMeter("uga-grpc")
+
+	fetchRequestMetrics = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grpc-fetch-request",
+		},
+		[]string{"state", "source"})
+
+	fetchSendMetrics = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grpc-fetch-request",
+		},
+		[]string{"state", "source"})
 )
 
 type PageRefGrpcService struct {
@@ -35,12 +48,14 @@ func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.Pag
 	common.UseMeter(ctx).Inc("grpc-fetch-request", 1, map[string]string{
 		"state": req.State.String(),
 	})
+	fetchRequestMetrics.WithLabelValues(req.State.String(), "unknown").Inc()
 
 	pageChan := receiver.service.Fetch(ctx, req.State, req.Websites)
 
 	for record := range pageChan {
 		err := res.Send(convertPageRef(record))
 		common.UseMeter(ctx).Inc("grpc-fetch-send", 1, common.PageRefRecordToTags(*record))
+		fetchSendMetrics.WithLabelValues(record.Data.State, record.Data.Source).Inc()
 
 		if err != nil {
 			log.Error(err)
