@@ -8,6 +8,7 @@ import (
 
 func EnablePrometheusMetrics(service string) {
 	go func() {
+		log.Printf("Starting prometheus metrics")
 		http.Handle("/"+service+"/metrics", promhttp.Handler())
 		log.Error(http.ListenAndServe(":1111", nil))
 	}()
