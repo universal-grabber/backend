@@ -17,15 +17,27 @@ var (
 
 	fetchRequestMetrics = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "grpc-fetch-request",
+			Name: "grpcFetchRequest",
 		},
 		[]string{"state", "source"})
 
 	fetchSendMetrics = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "grpc-fetch-request",
+			Name: "grpcFetchSend",
 		},
 		[]string{"state", "source"})
+
+	completeRequestMetrics = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grpcCompleteRequest",
+		},
+		[]string{})
+
+	completeSendMetrics = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grpcSendRequest",
+		},
+		[]string{"state", "status"})
 )
 
 type PageRefGrpcService struct {
@@ -38,6 +50,7 @@ func (receiver *PageRefGrpcService) Init() {
 	receiver.service = new(service.PageRefKafkaService)
 
 	prometheus.MustRegister(fetchRequestMetrics, fetchSendMetrics)
+	prometheus.MustRegister(completeRequestMetrics, completeSendMetrics)
 }
 
 func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.PageRefService_FetchServer) error {
@@ -74,10 +87,12 @@ func (receiver PageRefGrpcService) Complete(_ context.Context, req *pb.PageRefLi
 	var items []model.PageRef
 
 	grpcMetricsRegistry.Inc("grpc-complete-request", 1, nil)
+	completeRequestMetrics.WithLabelValues().Inc()
 
 	for _, record := range req.List {
 		items = append(items, *convertBasePageRef(record))
 		grpcMetricsRegistry.Inc("grpc-complete-receive", 1, common.PageRefRecordToTags2(*record))
+		completeSendMetrics.WithLabelValues(record.State.String(), record.Status.String()).Inc()
 	}
 
 	err := receiver.service.Complete(items)

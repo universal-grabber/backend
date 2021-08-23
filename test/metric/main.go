@@ -5,6 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
+	"time"
 )
 
 var (
@@ -21,18 +22,21 @@ var (
 	)
 )
 
-func init() {
-	// Metrics have to be registered to be exposed:
-	prometheus.MustRegister(cpuTemp)
-	prometheus.MustRegister(hdFailures)
-}
-
 func main() {
 	cpuTemp.Set(65.3)
 	hdFailures.With(prometheus.Labels{"device": "/dev/sda"}).Inc()
 
 	// The Handler function provides a default handler to expose metrics
 	// via an HTTP server. "/metrics" is the usual endpoint for that.
-	http.Handle("/metrics", promhttp.Handler())
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		log.Fatal(http.ListenAndServe(":8081", nil))
+	}()
+
+	time.Sleep(1 * time.Second)
+
+	prometheus.MustRegister(cpuTemp)
+	prometheus.MustRegister(hdFailures)
+
+	time.Sleep(1000 * time.Second)
 }
