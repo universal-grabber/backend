@@ -35,7 +35,7 @@ var (
 
 	completeSendMetrics = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "grpcSendRequest",
+			Name: "grpcCompleteSend",
 		},
 		[]string{"state", "status"})
 )

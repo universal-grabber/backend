@@ -53,7 +53,7 @@ func (receiver *ScheduleApiImpl) ScheduleKafka(c *gin.Context) {
 
 	go func() {
 
-		ctx, cancel := context.WithCancel(c.Request.Context())
+		ctx, cancel := context.WithCancel(context.TODO())
 		defer cancel()
 
 		pageLog := opLog.WithField("page", searchPageRef.Page)
