@@ -36,6 +36,8 @@ type PageRefGrpcService struct {
 
 func (receiver *PageRefGrpcService) Init() {
 	receiver.service = new(service.PageRefKafkaService)
+
+	prometheus.MustRegister(fetchRequestMetrics, fetchSendMetrics)
 }
 
 func (receiver PageRefGrpcService) Fetch(req *pb.PageRefFetchRequest, res pb.PageRefService_FetchServer) error {
