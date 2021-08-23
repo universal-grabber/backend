@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	common.Init("model-parser")
 	app := new(appPackage.App)
 
 	common.Init("model-processor")
