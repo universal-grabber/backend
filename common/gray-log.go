@@ -15,5 +15,5 @@ func EnableGrayLog(service string) {
 	hook.Writer().CompressionLevel = 9
 
 	log.AddHook(hook)
-	//log.SetFormatter(new(NullFormatter)) // Don't send logs to stdout
+	log.SetFormatter(new(NullFormatter)) // Don't send logs to stdout
 }
