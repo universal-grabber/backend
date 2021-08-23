@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	common.EnableGrayLog("ugb-processor")
+	common.Init("ugb-processor")
 
 	app := new(appPackage.App)
 
