@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	common.EnableGrayLog("ugb-storage")
+	common.Init("ugb-storage")
 
 	app := new(appPackage.App)
 

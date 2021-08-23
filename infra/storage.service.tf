@@ -20,9 +20,10 @@ resource "kubernetes_service" "ugb-storage" {
     }
 
     port {
-      name = "grpc"
+      name = "metrics"
       port = 6565
       target_port = 6565
+      node_port = 30113
     }
   }
 }

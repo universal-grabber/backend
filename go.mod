@@ -8,7 +8,9 @@ require (
 	github.com/gin-gonic/gin v1.7.0
 	github.com/google/uuid v1.1.2
 	github.com/gosimple/slug v1.9.0
+	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/pborman/uuid v1.2.1
+	github.com/prometheus/client_golang v1.4.0
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
 	github.com/robfig/cron v1.2.0
 	github.com/satori/go.uuid v1.2.0
@@ -20,6 +22,7 @@ require (
 	go.mongodb.org/mongo-driver v1.5.1
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	google.golang.org/grpc v1.37.0
 	google.golang.org/protobuf v1.27.1
 )

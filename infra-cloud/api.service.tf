@@ -28,5 +28,12 @@ resource "kubernetes_service" "ugb-api" {
       node_port = 30004
       target_port = 6565
     }
+
+    port {
+      name = "metrics"
+      port = 1111
+      target_port = 1111
+      node_port = 30113
+    }
   }
 }

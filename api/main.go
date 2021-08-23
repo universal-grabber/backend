@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	common.EnableGrayLog("ugb-api")
+	common.Init("ugb-api")
 
 	log.Info("Started\n")
 

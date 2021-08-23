@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	common.EnableGrayLog("test")
+	common.Init("test")
 
 	log.Print("print1")
 	log.Trace("trace1")

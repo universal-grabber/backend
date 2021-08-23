@@ -8,7 +8,7 @@ import (
 func main() {
 	app := new(appPackage.App)
 
-	common.EnableGrayLog("model-processor")
+	common.Init("model-processor")
 
 	app.Addr = ":8443"
 
