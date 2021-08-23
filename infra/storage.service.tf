@@ -20,6 +20,12 @@ resource "kubernetes_service" "ugb-storage" {
     }
 
     port {
+      name = "http"
+      port = 6565
+      target_port = 6565
+    }
+
+    port {
       name = "metrics"
       port = 1111
       target_port = 1111
