@@ -6,6 +6,7 @@ import (
 	"backend/api/service"
 	"backend/common"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 type PageRefApiImpl struct {
@@ -23,6 +24,12 @@ func (receiver *PageRefApiImpl) Init() {
 func (receiver *PageRefApiImpl) RegisterRoutes(r *gin.Engine) {
 	r.GET("/api/1.0/page-refs", receiver.List)
 	r.GET("/api/1.0/page-refs/urls", receiver.ListUrls)
+	// misc
+	r.GET("/api/1.0/trace-logging", receiver.EnableTraceLogging)
+}
+
+func (receiver *PageRefApiImpl) EnableTraceLogging(c *gin.Context) {
+	common.EnableTraceLogging(1 * time.Minute)
 }
 
 func (receiver *PageRefApiImpl) List(c *gin.Context) {
