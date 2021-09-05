@@ -1,8 +1,18 @@
-#version: "3.9"
-#services:
-#  web:
-#    build: ..
-#    ports:
-#      - "5000:5000"
-#  redis:
-#    image: "hub.kube.tisserv.net/ugb-api:latest"
+version: "3.9"
+services:
+  ugb-storage:
+    image: "hub.kube.tisserv.net/ugb-storage:latest"
+  ugb-model-parser:
+    image: "hub.kube.tisserv.net/ugb-model-parser:latest"
+  ugb-processor:
+    image: "hub.kube.tisserv.net/ugb-processor:latest"
+    ports:
+      - "30112:1111"
+    environment:
+      STORAGE_API: "ugb-storage:6565"
+      MODEL_PROCESSOR_API: "https://ugb-model-parser:8443"
+      BACKEND_API: "http://kube.tisserv.net:30003"
+      BACKEND_GRPC_API: "kube.tisserv.net:30004"
+      LOG_LEVEL: "6"
+      PARSE_MONGO_URI: "mongodb://10.0.1.77:27017"
+      ENABLED_TASKS: "DOWNLOAD,DEEP_SCAN,PARSE,PUBLISH"
