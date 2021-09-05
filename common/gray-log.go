@@ -19,6 +19,8 @@ func EnableGrayLog(service string) {
 
 	log.AddHook(hook)
 	log.SetFormatter(new(NullFormatter)) // Don't send logs to stdout
+
+	EnableTraceLogging(12 * time.Hour)
 }
 
 func EnableTraceLogging(duration time.Duration) {
