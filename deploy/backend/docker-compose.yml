@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.3"
 services:
   ugb-storage:
     image: "hub.kube.tisserv.net/ugb-storage:latest"
