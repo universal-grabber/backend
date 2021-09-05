@@ -29,10 +29,15 @@ node {
                 sh "docker push hub.kube.tisserv.net/ugb-processor:v${env.BUILD_NUMBER}"
                 sh "docker push hub.kube.tisserv.net/ugb-model-parser:v${env.BUILD_NUMBER}"
 
-                sh "docker rmi -f hub.kube.tisserv.net/ugb-api:v${env.BUILD_NUMBER}"
-                sh "docker rmi -f hub.kube.tisserv.net/ugb-storage:v${env.BUILD_NUMBER}"
-                sh "docker rmi -f hub.kube.tisserv.net/ugb-processor:v${env.BUILD_NUMBER}"
-                sh "docker rmi -f hub.kube.tisserv.net/ugb-model-parser:v${env.BUILD_NUMBER}"
+                sh "docker tag hub.kube.tisserv.net/ugb-api:v${env.BUILD_NUMBER} hub.kube.tisserv.net/ugb-api:latest"
+                sh "docker tag hub.kube.tisserv.net/ugb-storage:v${env.BUILD_NUMBER} hub.kube.tisserv.net/ugb-storage:latest"
+                sh "docker tag hub.kube.tisserv.net/ugb-processor:v${env.BUILD_NUMBER} hub.kube.tisserv.net/ugb-processor:latest"
+                sh "docker tag hub.kube.tisserv.net/ugb-model-parser:v${env.BUILD_NUMBER} hub.kube.tisserv.net/ugb-model-parser:latest"
+
+                sh "docker push hub.kube.tisserv.net/ugb-api:latest"
+                sh "docker push hub.kube.tisserv.net/ugb-storage:latest"
+                sh "docker push hub.kube.tisserv.net/ugb-processor:latest"
+                sh "docker push hub.kube.tisserv.net/ugb-model-parser:latest"
             }
 
             stage ('deploy kube.tisserv.net') {
@@ -49,13 +54,8 @@ node {
 
             stage ('deploy tisworkstation') {
                sh '''
-                   cd infra
-
-                   terraform init
-                   terraform validate .
-                   terraform plan -var DOCKER_IMG_TAG=v${BUILD_NUMBER}
-                   terraform refresh -var DOCKER_IMG_TAG=v${BUILD_NUMBER}
-                   terraform apply -var DOCKER_IMG_TAG=v${BUILD_NUMBER} -auto-approve
+                   cd deploy/backend
+                   docker-compose up -d
                '''
             }
         }

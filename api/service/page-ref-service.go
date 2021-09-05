@@ -18,6 +18,18 @@ import (
 type PageRefService struct {
 }
 
+func (service *PageRefService) Stats(ctx context.Context, searchPageRef *model.SearchPageRef) (model.PageRefStats, error) {
+	//db := helper.UgbMongoInstance
+
+	//opts := new(options.FindOptions)
+	//
+	//cursor, err := db.GetCollection(_const.UgbMongoDb, "pageRef").
+	//	Aggregate(ctx, bson.M{
+	//
+	//})
+	return model.PageRefStats{}, nil
+}
+
 func (service *PageRefService) Search(context context.Context, searchPageRef *model.SearchPageRef, pageChan chan *model.PageRef) {
 	db := helper.UgbMongoInstance
 	opts := new(options.FindOptions)

@@ -26,10 +26,31 @@ func (receiver *PageRefApiImpl) RegisterRoutes(r *gin.Engine) {
 	r.GET("/api/1.0/page-refs/urls", receiver.ListUrls)
 	// misc
 	r.GET("/api/1.0/trace-logging", receiver.EnableTraceLogging)
+	r.GET("/api/1.0/page-refs/stats", receiver.Stats)
 }
 
 func (receiver *PageRefApiImpl) EnableTraceLogging(c *gin.Context) {
 	common.EnableTraceLogging(1 * time.Minute)
+}
+
+func (receiver *PageRefApiImpl) Stats(c *gin.Context) {
+	ctx := common.WithLogger(c.Request.Context())
+	ctx = common.WithMeter(ctx, pageRefApiListMeter)
+
+	searchPageRef := new(model.SearchPageRef)
+	err := helper.ParseRequestQuery(c.Request, searchPageRef)
+
+	if err != nil {
+		common.UseLogger(ctx).Error(err)
+		return
+	}
+
+	common.UseMeter(ctx).Inc("list-request", 1, map[string]string{
+		"state":  searchPageRef.State,
+		"status": searchPageRef.Status,
+	})
+
+	//receiver.service.Search(ctx, searchPageRef, pageChan)
 }
 
 func (receiver *PageRefApiImpl) List(c *gin.Context) {
