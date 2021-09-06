@@ -46,7 +46,8 @@ func (service *PageRefService) Stats(ctx context.Context, searchPageRef *model.S
 		return err
 	}
 
-	c.String(200, "[")
+	var result []*bson.M
+
 	for cursor.Next(ctx) {
 		pageRefStats := new(bson.M)
 
@@ -56,9 +57,9 @@ func (service *PageRefService) Stats(ctx context.Context, searchPageRef *model.S
 			break
 		}
 
-		c.JSON(200, pageRefStats)
+		result = append(result, pageRefStats)
 	}
-	c.String(200, "]")
+	c.JSON(200, result)
 
 	return nil
 }
