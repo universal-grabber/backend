@@ -50,7 +50,13 @@ func (receiver *PageRefApiImpl) Stats(c *gin.Context) {
 		"status": searchPageRef.Status,
 	})
 
-	//receiver.service.Search(ctx, searchPageRef, pageChan)
+	err = receiver.service.
+		Stats(ctx, searchPageRef, c)
+
+	if err != nil {
+		common.UseLogger(ctx).Error(err)
+		return
+	}
 }
 
 func (receiver *PageRefApiImpl) List(c *gin.Context) {

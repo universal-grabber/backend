@@ -7,6 +7,7 @@ import (
 	"backend/api/model"
 	"backend/api/util"
 	"context"
+	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,16 +19,48 @@ import (
 type PageRefService struct {
 }
 
-func (service *PageRefService) Stats(ctx context.Context, searchPageRef *model.SearchPageRef) (model.PageRefStats, error) {
-	//db := helper.UgbMongoInstance
+func (service *PageRefService) Stats(ctx context.Context, searchPageRef *model.SearchPageRef, c *gin.Context) error {
+	db := helper.UgbMongoInstance
 
 	//opts := new(options.FindOptions)
-	//
-	//cursor, err := db.GetCollection(_const.UgbMongoDb, "pageRef").
-	//	Aggregate(ctx, bson.M{
-	//
-	//})
-	return model.PageRefStats{}, nil
+
+	//  [    { $group: { _id: {state: "$data.state", status: "$data.status", source: "$data.websiteName"}, myCount: { $sum: 1 } } },
+	// { $project: { _id: 0 } } ]
+	cursor, err := db.GetCollection(_const.UgbMongoDb, "pageRef").
+		Aggregate(ctx, bson.A{
+			bson.M{
+				"$group": bson.M{
+					"_id": bson.M{
+						"state":  "$data.state",
+						"status": "$data.status",
+						"source": "$data.websiteName",
+					},
+					"count": bson.M{
+						"$sum": 1,
+					},
+				},
+			},
+		})
+
+	if err != nil {
+		return err
+	}
+
+	c.String(200, "[")
+	for cursor.Next(ctx) {
+		pageRefStats := new(bson.M)
+
+		err := bson.UnmarshalWithRegistry(helper.MongoRegistry, cursor.Current, pageRefStats)
+
+		if err != nil {
+			break
+		}
+
+		c.JSON(200, pageRefStats)
+	}
+	c.String(200, "]")
+
+	return nil
 }
 
 func (service *PageRefService) Search(context context.Context, searchPageRef *model.SearchPageRef, pageChan chan *model.PageRef) {
